@@ -38,11 +38,19 @@ func TestMakell_rb_tree(t *testing.T) {
 	if tree.root != nil {
 		t.Errorf("Root is not nil")
 	}
-	if tree.find(Int(1)) {
+	found, iterations := tree.find(Int(1))
+	if found {
 		t.Errorf("Unexpectedly found Int")
 	}
-	if tree.find(Real(1.0)) {
+	if iterations != 0 {
+		t.Errorf("Expected 0 iteretions got: %v", iterations)
+	}
+	found, iterations = tree.find(Real(1.0))
+	if found {
 		t.Errorf("Unexpectedly found Real")
+	}
+	if iterations != 0 {
+		t.Errorf("Expected 0 iteretions got: %v", iterations)
 	}
 }
 
@@ -57,11 +65,19 @@ func TestMakell_rb_tree_ptr(t *testing.T) {
 	if tree.root != nil {
 		t.Errorf("Root is not nil")
 	}
-	if tree.find(Int(1)) {
+	found, iterations := tree.find(Int(1))
+	if found {
 		t.Errorf("Unexpectedly found Int")
 	}
-	if tree.find(Real(1.0)) {
+	if iterations != 0 {
+		t.Errorf("Expected 0 iteretions got: %v", iterations)
+	}
+	found, iterations = tree.find(Real(1.0))
+	if found {
 		t.Errorf("Unexpectedly found Real")
+	}
+	if iterations != 0 {
+		t.Errorf("Expected 0 iteretions got: %v", iterations)
 	}
 }
 
