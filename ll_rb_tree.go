@@ -6,6 +6,7 @@
 package heteroset
 
 import "reflect"
+//import "fmt"
 
 // Implement 2-3 left Leaning Red Black Trees for for internal representation.
 // It is based on the Java implementation described by Robert Sedgewick
@@ -38,8 +39,10 @@ func new_ll_rb_node(item Item) *ll_rb_node {
 }
 
 func (this *ll_rb_node) compare_item(item Item) int {
-	thistp := reflect.Typeof(this.item).PkgPath()
-	itemtp := reflect.Typeof(item).PkgPath()
+	thist := reflect.Typeof(this.item)
+	itemt := reflect.Typeof(item)
+	thistp := thist.PkgPath() + thist.Name()
+	itemtp := itemt.PkgPath() + itemt.Name()
 	for i := 0; ; i++ {
 		if i >= len(thistp) {
 			if len(thistp) == len(itemtp) {
@@ -230,7 +233,7 @@ func (this ll_rb_tree) find(item Item) (found bool, iterations uint) {
 	return
 }
 
-func (this ll_rb_tree) insert(item Item) {
+func (this *ll_rb_tree) insert(item Item) {
 	var inserted bool
 	this.root, inserted = insert(this.root, item)
 	if inserted {
@@ -239,7 +242,7 @@ func (this ll_rb_tree) insert(item Item) {
 	this.root.red = false
 }
 
-func (this ll_rb_tree) delete(item Item) {
+func (this *ll_rb_tree) delete(item Item) {
 	var deleted bool
 	this.root, deleted = delete(this.root, item)
 	if deleted {

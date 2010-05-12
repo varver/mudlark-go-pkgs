@@ -6,8 +6,9 @@ package heteroset
 
 import (
 	"testing"
-//	"rand"
+	"rand"
 	"reflect"
+	//"fmt"
 )
 
 type Int int
@@ -78,6 +79,50 @@ func TestMakell_rb_tree_ptr(t *testing.T) {
 	}
 	if iterations != 0 {
 		t.Errorf("Expected 0 iteretions got: %v", iterations)
+	}
+}
+
+func TestMakeinsert(t *testing.T) {
+	var tree ll_rb_tree
+	var failures int
+	for i := 0; i < 1000; i++ {
+		iitem := Int(rand.Intn(800))
+		iin, _ := tree.find(iitem)
+		tsz := tree.count
+		tree.insert(iitem)
+		if iin {
+			if tsz != tree.count {
+				t.Errorf("Count changed (insert i): Expected %v got: %v", tsz, tree.count)
+			}
+		} else {
+			if tsz + 1 != tree.count {
+				t.Errorf("Count uchanged (insert i): Expected %v got: %v", tsz + 1, tree.count)
+			}
+		}
+		if iin, _ = tree.find(iitem); !iin {
+			t.Errorf("Inserted %v not found", iitem)
+			failures++
+		}
+		ritem := Real(rand.Float64())
+		rin, _:= tree.find(ritem)
+		tsz = tree.count
+		tree.insert(ritem)
+		if rin {
+			if tsz != tree.count {
+				t.Errorf("Count changed (insert i): Expected %v got: %v", tsz, tree.count)
+			}
+		} else {
+			if tsz + 1 != tree.count {
+				t.Errorf("Count uchanged (insert i): Expected %v got: %v", tsz + 1, tree.count)
+			}
+		}
+		if rin, _ = tree.find(ritem); !rin {
+			t.Errorf("Inserted %v not found", ritem)
+			failures++
+		}
+	}
+	if failures != 0 {
+		t.Errorf("%v failures", failures)
 	}
 }
 
