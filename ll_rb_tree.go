@@ -6,7 +6,7 @@
 package heteroset
 
 import "reflect"
-//import "fmt"
+import "fmt"
 
 // Implement 2-3 left Leaning Red Black Trees for for internal representation.
 // It is based on the Java implementation described by Robert Sedgewick
@@ -118,9 +118,9 @@ func insert(node *ll_rb_node, item Item) (*ll_rb_node, bool) {
 	inserted := false
 	switch cmp := node.compare_item(item); {
 	case cmp < 0:
-		node, inserted = insert(node.left, item)
+		node.left, inserted = insert(node.left, item)
 	case cmp > 0:
-		node, inserted = insert(node.right, item)
+		node.right, inserted = insert(node.right, item)
 	default:
 	}
 	return fix_up(node), inserted
@@ -188,37 +188,25 @@ func delete(node *ll_rb_node, item Item) (*ll_rb_node, bool) {
 	return fix_up(node), deleted
 }
 
-// A stack to facilitate iteration
-type node_stack struct {
-	node *ll_rb_node
-	stack *node_stack
-}
-
-func is_empty(stack *node_stack) bool {
-	return stack != nil
-}
-
-func push(stack *node_stack, node *ll_rb_node) *node_stack {
-	return &node_stack{node, stack}
-}
-
-func pop(stack *node_stack) (*node_stack, *ll_rb_node) {
-	return stack.stack, stack.node
+func iterate_preorder(node *ll_rb_node, c chan<- Item) {
+	if node == nil {
+		return
+	}
+	c <- node.item
+	iterate_preorder(node.left, c)
+	iterate_preorder(node.right, c)
 }
 
 func iterate(node *ll_rb_node, c chan<- Item) {
-	for stack := push(nil, node); !is_empty(stack); {
-		var current *ll_rb_node
-		stack, current = pop(stack)
-		if current.right != nil {
-			stack = push(stack, current.right)
-		}
-		if current.left != nil {
-			stack = push(stack, current.left)
-		}
-		c <- current.item
-	}
+	iterate_preorder(node, c)
 	close(c)
+}
+
+func print_node(node *ll_rb_node) {
+	if node == nil { return }
+	fmt.Printf("%v\n", node)
+	print_node(node.left)
+	print_node(node.right)
 }
 
 type ll_rb_tree struct {
