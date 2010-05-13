@@ -134,7 +134,7 @@ func TestMakeiterate(t *testing.T) {
 		tree.insert(Real(rand.Float64()))
 		count++
 	}
-	for item := range tree.iterator() {
+	for item := range tree.iterator(PRE_ORDER) {
 		if cmp_type(item, Int(0)) == 0 {
 			// shut compiler up
 		}
@@ -162,7 +162,7 @@ func TestMakedepth_properties(t *testing.T) {
 			_, depth = tree_random.find(Int(i))
 			if depth > max_depth_random { max_depth_random = depth }
 		}
-		if max_depth_sequential > 2 * n || max_depth_random > max_depth_sequential {
+		if max_depth_sequential > 2 * n || max_depth_random > 2 * n {
 			t.Errorf("%v : %v : %v : %v\n", n, i, max_depth_sequential, max_depth_random)
 		}
 	}

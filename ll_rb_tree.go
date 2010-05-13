@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-// The heteroset package implements heterogeneou sets
+// The heteroset package implements heterogeneous sets
 package heteroset
 
 import "reflect"
@@ -18,8 +18,11 @@ import "fmt"
 // Prospective set items must implement this interface and must satisfy the
 // following formal requirements:
 //	 a.Compare(b) < 0 implies b.Compare(a) > 0
+//	 a.Compare(b) < 0 && b.Compare(c) < 0 implies a.Compare(c) < 0
 //	 a.Compare(b) > 0 implies b.Compare(a) < 0
+//	 a.Compare(b) > 0 && b.Compare(c) > 0 implies a.Compare(c) > 0
 //	 a.Compare(b) == 0 implies b.Compare(a) == 0
+//	 a.compare(b) implies a == b
 // This method will only be called if the type of the calling object matches
 // that of other.
 type Item interface {
@@ -117,9 +120,9 @@ func insert(node *ll_rb_node, item Item) (*ll_rb_node, bool) {
 	}
 	inserted := false
 	switch cmp := node.compare_item(item); {
-	case cmp < 0:
-		node.left, inserted = insert(node.left, item)
 	case cmp > 0:
+		node.left, inserted = insert(node.left, item)
+	case cmp < 0:
 		node.right, inserted = insert(node.right, item)
 	default:
 	}
@@ -158,7 +161,7 @@ func delete_left_most(node *ll_rb_node) *ll_rb_node {
 
 func delete(node *ll_rb_node, item Item) (*ll_rb_node, bool) {
 	var deleted bool
-	if node.compare_item(item) < 0 {
+	if node.compare_item(item) > 0 {
 		if !is_red(node.left) && !is_red(node.left.left) {
 			node = move_red_left(node)
 		}
@@ -197,8 +200,51 @@ func iterate_preorder(node *ll_rb_node, c chan<- Item) {
 	iterate_preorder(node.right, c)
 }
 
-func iterate(node *ll_rb_node, c chan<- Item) {
-	iterate_preorder(node, c)
+func iterate_inorder(node *ll_rb_node, c chan<- Item) {
+	if node == nil {
+		return
+	}
+	iterate_inorder(node.left, c)
+	c <- node.item
+	iterate_inorder(node.right, c)
+}
+
+func iterate_postorder(node *ll_rb_node, c chan<- Item) {
+	if node == nil {
+		return
+	}
+	iterate_postorder(node.left, c)
+	iterate_postorder(node.right, c)
+	c <- node.item
+}
+
+func iterate_reverseorder(node *ll_rb_node, c chan<- Item) {
+	if node == nil {
+		return
+	}
+	iterate_reverseorder(node.right, c)
+	c <- node.item
+	iterate_reverseorder(node.left, c)
+}
+
+const (
+	PRE_ORDER = iota
+	IN_ORDER
+	POST_ORDER
+	REVERSE_ORDER
+)
+
+func iterate(node *ll_rb_node, c chan<- Item, order int) {
+	switch order {
+	case PRE_ORDER:
+		iterate_preorder(node, c)
+	case IN_ORDER:
+		iterate_inorder(node, c)
+	case POST_ORDER:
+		iterate_postorder(node, c)
+	case REVERSE_ORDER:
+		iterate_reverseorder(node, c)
+	}
 	close(c)
 }
 
@@ -221,9 +267,9 @@ func (this ll_rb_tree) find(item Item) (found bool, iterations uint) {
 	for node := this.root; node != nil && !found; {
 		iterations++
 		switch cmp := node.compare_item(item); {
-		case cmp < 0:
-			node = node.left
 		case cmp > 0:
+			node = node.left
+		case cmp < 0:
 			node = node.right
 		default:
 			found = true
@@ -250,9 +296,9 @@ func (this *ll_rb_tree) delete(item Item) {
 	this.root.red = false
 }
 
-func (this ll_rb_tree) iterator() <-chan Item {
+func (this ll_rb_tree) iterator(order int) <-chan Item {
 	c := make(chan Item)
-	go iterate(this.root, c)
+	go iterate(this.root, c, order)
 	return c
 }
 
