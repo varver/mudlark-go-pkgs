@@ -20,6 +20,8 @@ import "reflect"
 //	 a.Compare(b) < 0 implies b.Compare(a) > 0
 //	 a.Compare(b) > 0 implies b.Compare(a) < 0
 //	 a.Compare(b) == 0 implies b.Compare(a) == 0
+// This method will only be called if the type of the calling object matches
+// that of other.
 type Item interface {
 	Compare(other Item) int
 }
@@ -38,25 +40,34 @@ func new_ll_rb_node(item Item) *ll_rb_node {
 	return node
 }
 
-func (this *ll_rb_node) compare_item(item Item) int {
-	thist := reflect.Typeof(this.item)
-	itemt := reflect.Typeof(item)
-	thistp := thist.PkgPath() + thist.Name()
-	itemtp := itemt.PkgPath() + itemt.Name()
-	for i := 0; ; i++ {
-		if i >= len(thistp) {
-			if len(thistp) == len(itemtp) {
-				break
-			} else {
-				return -1
-			}
-		} else if i >= len(itemtp) {
-			return 1
-		} else if thistp[i] < itemtp[i] {
+func min(a, b int) int { if a < b { return a }; return b }
+
+func cmp_string(a, b string) int {
+	for i, lim := 0, min(len(a), len(b)); i < lim; i++ {
+		if a[i] < b[i] {
 			return -1
-		} else if thistp[i] > itemtp[i] {
+		} else if a[i] > b[i] {
 			return 1
 		}
+	}
+	return len(a) - len(b)
+}
+
+func cmp_type(a, b interface{}) int {
+	ta := reflect.Typeof(a)
+	tb := reflect.Typeof(b)
+	if ta == tb {
+		return 0
+	}
+	if cp := cmp_string(ta.PkgPath(), tb.PkgPath()); cp != 0 {
+		return cp
+	}
+	return cmp_string(ta.Name(), tb.Name())
+}
+
+func (this *ll_rb_node) compare_item(item Item) int {
+	if ct := cmp_type(this.item, item); ct != 0 {
+		return ct
 	}
 	return this.item.Compare(item)
 }
