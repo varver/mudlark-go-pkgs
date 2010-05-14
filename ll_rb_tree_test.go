@@ -12,19 +12,14 @@ import (
 
 type Int int
 
-func (i Int) Compare(other interface{}) int {
-	return int(i) - int(other.(Int))
+func (i Int) Before(other interface{}) bool {
+	return int(i) < int(other.(Int))
 }
 
 type Real float64
 
-func (r Real) Compare(other interface{}) int {
-	if float64(r) < float64(other.(Real)) {
-		return -1
-	} else if float64(r) > float64(other.(Real)) {
-		return 1
-	}
-	return 0
+func (r Real) Before(other interface{}) bool {
+	return float64(r) < float64(other.(Real))
 }
 
 func TestMakell_rb_tree(t *testing.T) {

@@ -17,17 +17,14 @@ import "fmt"
 
 // Prospective set items must implement this interface and must satisfy the
 // following formal requirements (where a, b and c are all instances of the
-// same type:
-//	 a.Compare(b) < 0 implies b.Compare(a) > 0
-//	 a.Compare(b) < 0 && b.Compare(c) < 0 implies a.Compare(c) < 0
-//	 a.Compare(b) > 0 implies b.Compare(a) < 0
-//	 a.Compare(b) > 0 && b.Compare(c) > 0 implies a.Compare(c) > 0
-//	 a.Compare(b) == 0 implies b.Compare(a) == 0
-//	 a.compare(b) implies a == b
+// same type):
+//	 a.Before(b) implies !b.Before(a)
+//	 a.Before(b) && b.Before(c) implies a.Before(c)
+//	 !a.Before(b) && !b.Before(a) implies a == b
 // This method will only be used when reflect.Typeof() the calling object
 // matches reflect.Typeof() of other.
 type Item interface {
-	Compare(other interface{}) int
+	Before(other interface{}) bool
 }
 
 // LLRB tree node
@@ -73,7 +70,12 @@ func (this *ll_rb_node) compare_item(item Item) int {
 	if ct := cmp_type(this.item, item); ct != 0 {
 		return ct
 	}
-	return this.item.Compare(item)
+	if this.item.Before(item) {
+		return -1
+	} else if item.Before(this.item) {
+		return 1
+	}
+	return 0
 }
 
 func is_red(node *ll_rb_node) bool { return node != nil && node.red }
@@ -191,6 +193,10 @@ func delete(node *ll_rb_node, item Item) (*ll_rb_node, bool) {
 	}
 	return fix_up(node), deleted
 }
+
+// Iteration using recursion is safe because the depth of the tree should never
+// be greater than 2Log2(N) where N is the number of nodes in the tree and
+// (in general) will be approximately Log2(N).
 
 func iterate_preorder(node *ll_rb_node, c chan<- Item) {
 	if node == nil {
