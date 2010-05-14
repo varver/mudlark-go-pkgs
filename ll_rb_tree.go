@@ -16,17 +16,18 @@ import "fmt"
 // being inserted combine the roles of both key and value
 
 // Prospective set items must implement this interface and must satisfy the
-// following formal requirements:
+// following formal requirements (where a, b and c are all instances of the
+// same type:
 //	 a.Compare(b) < 0 implies b.Compare(a) > 0
 //	 a.Compare(b) < 0 && b.Compare(c) < 0 implies a.Compare(c) < 0
 //	 a.Compare(b) > 0 implies b.Compare(a) < 0
 //	 a.Compare(b) > 0 && b.Compare(c) > 0 implies a.Compare(c) > 0
 //	 a.Compare(b) == 0 implies b.Compare(a) == 0
 //	 a.compare(b) implies a == b
-// This method will only be called if the type of the calling object matches
-// that of other.
+// This method will only be used when reflect.Typeof() the calling object
+// matches reflect.Typeof() of other.
 type Item interface {
-	Compare(other Item) int
+	Compare(other interface{}) int
 }
 
 // LLRB tree node

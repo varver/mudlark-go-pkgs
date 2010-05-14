@@ -12,13 +12,13 @@ import (
 
 type Int int
 
-func (i Int) Compare(other Item) int {
+func (i Int) Compare(other interface{}) int {
 	return int(i) - int(other.(Int))
 }
 
 type Real float64
 
-func (r Real) Compare(other Item) int {
+func (r Real) Compare(other interface{}) int {
 	if float64(r) < float64(other.(Real)) {
 		return -1
 	} else if float64(r) > float64(other.(Real)) {
