@@ -24,8 +24,8 @@ func (r Real) Less(other interface{}) bool {
 
 func TestMakell_rb_tree(t *testing.T) {
 	var tree ll_rb_tree
-	if reflect.Typeof(tree).String() != "heteroset.ll_rb_tree" {
-		t.Errorf("Expected type \"heteroset.ll_rb_tree\": got %v", reflect.Typeof(tree).String())
+	if reflect.Typeof(tree).String() != "llrb_tree.ll_rb_tree" {
+		t.Errorf("Expected type \"llrb_tree.ll_rb_tree\": got %v", reflect.Typeof(tree).String())
 	}
 	if tree.count != 0 {
 		t.Errorf("Expected bitcount 0: got %v", tree.count)
@@ -51,8 +51,8 @@ func TestMakell_rb_tree(t *testing.T) {
 
 func TestMakell_rb_tree_ptr(t *testing.T) {
 	tree := new(ll_rb_tree)
-	if reflect.Typeof(tree).String() != "*heteroset.ll_rb_tree" {
-		t.Errorf("Expected type \"*heteroset.ll_rb_tree\": got %v", reflect.Typeof(tree).String())
+	if reflect.Typeof(tree).String() != "*llrb_tree.ll_rb_tree" {
+		t.Errorf("Expected type \"*llrb_tree.ll_rb_tree\": got %v", reflect.Typeof(tree).String())
 	}
 	if tree.count != 0 {
 		t.Errorf("Expected bitcount 0: got %v", tree.count)
@@ -117,6 +117,47 @@ func TestMakeinsert(t *testing.T) {
 	}
 	if failures != 0 {
 		t.Errorf("%v failures", failures)
+	}
+}
+
+func TestMakeinsert_keep_duplicates(t *testing.T) {
+	var tree ll_rb_tree
+	var failures int
+	var duplicates_found bool
+	tree.keep_duplicates = true
+	for i := 0; i < 1000; i++ {
+		iitem := Int(rand.Intn(800))
+		if found, _ := tree.find(iitem); found {
+			duplicates_found = true
+		}
+		tsz := tree.count
+		tree.insert(iitem)
+		if tsz + 1 != tree.count {
+			t.Errorf("Count uchanged (insert i): Expected %v got: %v", tsz + 1, tree.count)
+		}
+		if iin, _ := tree.find(iitem); !iin {
+			t.Errorf("Inserted %v not found", iitem)
+			failures++
+		}
+		ritem := Real(rand.Float64())
+		if found, _ := tree.find(ritem); found {
+			duplicates_found = true
+		}
+		tsz = tree.count
+		tree.insert(ritem)
+		if tsz + 1 != tree.count {
+			t.Errorf("Count uchanged (insert i): Expected %v got: %v", tsz + 1, tree.count)
+		}
+		if rin, _ := tree.find(ritem); !rin {
+			t.Errorf("Inserted %v not found", ritem)
+			failures++
+		}
+	}
+	if failures != 0 {
+		t.Errorf("%v failures", failures)
+	}
+	if !duplicates_found {
+		t.Errorf("Test invalid: no duplicates inserted")
 	}
 }
 

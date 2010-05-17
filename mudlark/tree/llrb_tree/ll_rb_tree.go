@@ -8,16 +8,16 @@
 // in his paper entitled "Left-leaning Red-Black Trees"
 // available at: <www.cs.princeton.edu/~rs/talks/LLRB/LLRB.pdf>.
 // The principal difference (other than the conversion to Go) is that the items
-// being inserted combine the roles of both key and value
+// being inserted combine the roles of both key and value.
 package llrb_tree
 
 import "reflect"
 import "fmt"
 
 
-// Prospective set items must implement this interface and must satisfy the
-// following formal requirements (where a, b and c are all instances of the
-// same type):
+// Items to be inserted in a tree must implement this interface and must
+// satisfy the following formal requirements (where a, b and c are all
+// instances of the same type):
 //	 a.Less(b) implies !b.Less(a)
 //	 a.Less(b) && b.Less(c) implies a.Less(c)
 //	 !a.Less(b) && !b.Less(a) implies a == b
@@ -132,6 +132,18 @@ func insert(node *ll_rb_node, item Item) (*ll_rb_node, bool) {
 	return fix_up(node), inserted
 }
 
+func insert_keep_duplicates(node *ll_rb_node, item Item) (*ll_rb_node) {
+	if node == nil {
+		return new_ll_rb_node(item)
+	}
+	if node.compare_item(item) > 0 {
+		node.left = insert_keep_duplicates(node.left, item)
+	} else {
+		node.right = insert_keep_duplicates(node.right, item)
+	}
+	return fix_up(node)
+}
+
 func move_red_left(node *ll_rb_node) *ll_rb_node {
 	flip_colours(node)
 	if (is_red(node.right.left)) {
@@ -234,7 +246,7 @@ func iterate_reverseorder(node *ll_rb_node, c chan<- Item) {
 	iterate_reverseorder(node.left, c)
 }
 
-// Specify output order for iteration commands
+// Specify output order for iteration.
 const (
 	PRE_ORDER = iota
 	IN_ORDER
@@ -263,9 +275,20 @@ func print_node(node *ll_rb_node) {
 	print_node(node.right)
 }
 
+func copy(node *ll_rb_node) *ll_rb_node {
+	if node == nil { return nil }
+	clone := new(ll_rb_node)
+	clone.item = node.item
+	clone.red = node.red
+	clone.left = copy(node.left)
+	clone.right = copy(node.right)
+	return clone
+}
+
 type ll_rb_tree struct {
 	root *ll_rb_node
-	count uint64
+	count uint
+	keep_duplicates bool
 }
 
 func (this ll_rb_tree) find(item Item) (found bool, iterations uint) {
@@ -287,10 +310,15 @@ func (this ll_rb_tree) find(item Item) (found bool, iterations uint) {
 }
 
 func (this *ll_rb_tree) insert(item Item) {
-	var inserted bool
-	this.root, inserted = insert(this.root, item)
-	if inserted {
+	if this.keep_duplicates {
+		this.root = insert_keep_duplicates(this.root, item)
 		this.count++
+	} else {
+		var inserted bool
+		this.root, inserted = insert(this.root, item)
+		if inserted {
+			this.count++
+		}
 	}
 	this.root.red = false
 }
@@ -309,4 +337,60 @@ func (this ll_rb_tree) iterator(order int) <-chan Item {
 	go iterate(this.root, c, order)
 	return c
 }
+
+// Tree is a Left-leaning Red/Black binary tree of objects that satisfy the
+// Item interface.  Instances of Tree must be initialized using Make()
+// before use.  E.g.:
+//	var t Tree = llrb_tree.Make(true)
+type Tree struct {
+	Data *ll_rb_tree
+}
+
+// Make a Tree. The parameter "filtered" determines whether duplicate items
+// will be filtered out (or kept) during insertion.
+func Make(filtered bool) (tree Tree) {
+	tree.Data = new(ll_rb_tree)
+	tree.Data.keep_duplicates = !filtered
+	return
+}
+
+// Make a copy of this tree.
+func (this Tree) Copy() (tree Tree) {
+	tree = Make(!this.Data.keep_duplicates)
+	tree.Data.root = copy(this.Data.root)
+	tree.Data.count = this.Data.count
+	return
+}
+
+// Len returns the number of items in the tree.
+func (this Tree) Len() uint {
+	return this.Data.count
+}
+
+// Insert item in the tree.
+func (this *Tree) Insert(item Item) {
+	this.Data.insert(item)
+}
+
+// Delete item from the tree. If item has duplicates in the tree only one will
+// be deleted.
+func (this *Tree) Delete(item Item) {
+	this.Data.delete(item)
+}
+
+// Is there an instance equal to item in the tree.
+func (this *Tree) Has(item Item) (found bool) {
+	found, _ = this.Data.find(item)
+	return
+}
+
+// Iterate over the tree in the order specified:
+//	order == IN_ORDER: in order as defined by Item.Less()
+//	order == REVERSE_ORDER: in reverse order as defined by Item.Less()
+//	order == PRE_ORDER: in binary tree pre order
+//	order == POST_ORDER: in binary tree post order
+func (this Tree) Iter(order int) <-chan Item {
+	return this.Data.iterator(order)
+}
+
 
