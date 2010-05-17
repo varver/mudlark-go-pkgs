@@ -1,0 +1,10 @@
+syntax: glob
+*~
+*.orig
+*.rej
+_obj
+_test
+6.out
+syntax: regexp
+_.*_\.6
+.*\#.*\#$
