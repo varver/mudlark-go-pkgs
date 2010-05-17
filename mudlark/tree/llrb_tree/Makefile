@@ -1,6 +1,6 @@
 include $(GOROOT)/src/Make.$(GOARCH)
 
-TARG=container/heteroset
+TARG=mudlark/tree/llrb_tree
 GOFILES=\
 	ll_rb_tree.go \
 

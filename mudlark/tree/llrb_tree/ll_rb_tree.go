@@ -3,7 +3,7 @@
 // license that can be found in the LICENSE file.
 
 // The heteroset package implements heterogeneous sets
-package heteroset
+package llrb_tree
 
 import "reflect"
 import "fmt"

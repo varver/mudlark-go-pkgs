@@ -64,7 +64,7 @@ test:	test.dirs
 bench:	bench.dirs ../../test/garbage.bench
 
 nuke: nuke.dirs
-	rm -rf "$(GOROOT)"/pkg/mudlark
+	rm -rf "$(GOROOT)"/pkg/$(GOOS)_$(GOARCH)/mudlark
 
 deps:
 	$(GOROOT)/src/pkg/deps.bash
