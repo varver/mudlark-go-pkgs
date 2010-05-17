@@ -2,18 +2,18 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-// The heteroset package implements heterogeneous sets
+// Implement 2-3 left Leaning Red Black Binary Trees.
+//
+// Based on the Java implementation described by Robert Sedgewick
+// in his paper entitled "Left-leaning Red-Black Trees"
+// available at: <www.cs.princeton.edu/~rs/talks/LLRB/LLRB.pdf>.
+// The principal difference (other than the conversion to Go) is that the items
+// being inserted combine the roles of both key and value
 package llrb_tree
 
 import "reflect"
 import "fmt"
 
-// Implement 2-3 left Leaning Red Black Trees for for internal representation.
-// It is based on the Java implementation described by Robert Sedgewick
-// in his paper entitled "left-leaning Red-Black Trees"
-// available at: <www.cs.princeton.edu/~rs/talks/LLRB/LLRB.pdf>.
-// The principal difference (other than the conversion to Go) is that the items
-// being inserted combine the roles of both key and value
 
 // Prospective set items must implement this interface and must satisfy the
 // following formal requirements (where a, b and c are all instances of the
@@ -234,6 +234,7 @@ func iterate_reverseorder(node *ll_rb_node, c chan<- Item) {
 	iterate_reverseorder(node.left, c)
 }
 
+// Specify output order for iteration commands
 const (
 	PRE_ORDER = iota
 	IN_ORDER
