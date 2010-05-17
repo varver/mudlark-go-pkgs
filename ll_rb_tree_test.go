@@ -12,13 +12,13 @@ import (
 
 type Int int
 
-func (i Int) Before(other interface{}) bool {
+func (i Int) Less(other interface{}) bool {
 	return int(i) < int(other.(Int))
 }
 
 type Real float64
 
-func (r Real) Before(other interface{}) bool {
+func (r Real) Less(other interface{}) bool {
 	return float64(r) < float64(other.(Real))
 }
 

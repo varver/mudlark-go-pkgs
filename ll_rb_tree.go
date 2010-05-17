@@ -18,13 +18,13 @@ import "fmt"
 // Prospective set items must implement this interface and must satisfy the
 // following formal requirements (where a, b and c are all instances of the
 // same type):
-//	 a.Before(b) implies !b.Before(a)
-//	 a.Before(b) && b.Before(c) implies a.Before(c)
-//	 !a.Before(b) && !b.Before(a) implies a == b
+//	 a.Less(b) implies !b.Less(a)
+//	 a.Less(b) && b.Less(c) implies a.Less(c)
+//	 !a.Less(b) && !b.Less(a) implies a == b
 // This method will only be used when reflect.Typeof() the calling object
 // matches reflect.Typeof() of other.
 type Item interface {
-	Before(other interface{}) bool
+	Less(other interface{}) bool
 }
 
 // LLRB tree node
@@ -70,9 +70,9 @@ func (this *ll_rb_node) compare_item(item Item) int {
 	if ct := cmp_type(this.item, item); ct != 0 {
 		return ct
 	}
-	if this.item.Before(item) {
+	if this.item.Less(item) {
 		return -1
-	} else if item.Before(this.item) {
+	} else if item.Less(this.item) {
 		return 1
 	}
 	return 0
