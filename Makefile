@@ -1,3 +1,4 @@
+# Copyright 2009 The Go Authors. All rights reserved.
 # Copyright 2010 Peter Williams. All rights reserved.
 # Use of this source code is governed by the new BSD license
 # license that can be found in the LICENSE file.
