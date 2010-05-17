@@ -21,7 +21,8 @@ QUOTED_GOBIN=$(subst $(space),\ ,$(GOBIN))
 all: install
 
 DIRS=\
-	mudlark/tree/llrb_tree
+	mudlark/tree/llrb_tree\
+	mudlark/sort
 
 NOTEST=
 
