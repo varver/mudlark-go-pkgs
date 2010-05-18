@@ -12,8 +12,6 @@
 package llrb_tree
 
 import "reflect"
-import "fmt"
-
 
 // Items to be inserted in a tree must implement this interface and must
 // satisfy the following formal requirements (where a, b and c are all
@@ -266,13 +264,6 @@ func iterate(node *ll_rb_node, c chan<- Item, order int) {
 		iterate_reverseorder(node, c)
 	}
 	close(c)
-}
-
-func print_node(node *ll_rb_node) {
-	if node == nil { return }
-	fmt.Printf("%v\n", node)
-	print_node(node.left)
-	print_node(node.right)
 }
 
 func copy(node *ll_rb_node) *ll_rb_node {

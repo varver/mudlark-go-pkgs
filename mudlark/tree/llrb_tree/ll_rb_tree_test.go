@@ -8,6 +8,7 @@ import (
 	"testing"
 	"rand"
 	"reflect"
+	"fmt"
 )
 
 type Int int
@@ -20,6 +21,13 @@ type Real float64
 
 func (r Real) Less(other interface{}) bool {
 	return float64(r) < float64(other.(Real))
+}
+
+func print_node(node *ll_rb_node) {
+	if node == nil { return }
+	fmt.Printf("%v\n", node)
+	print_node(node.left)
+	print_node(node.right)
 }
 
 func TestMakell_rb_tree(t *testing.T) {
@@ -181,24 +189,34 @@ func TestMakeiterate(t *testing.T) {
 	}
 }
 
+func max_depth(node *ll_rb_node) uint {
+	if node == nil { return 0 }
+	ld := max_depth(node.left)
+	rd := max_depth(node.right)
+	if ld > rd {
+		return ld + 1
+	}
+	return rd + 1
+}
+
 // test that depth of tree doesn't exceed 2 * log2(cardinality) using:
 //		random (best case) input
 //		sequential (worst case) input
 func TestMakedepth_properties(t *testing.T) {
-	var tree_sequential, tree_random ll_rb_tree
+	var tree_sequential, tree_reverse, tree_random ll_rb_tree
 	var i int
-	var max_depth_sequential, max_depth_random uint
+	var max_depth_sequential, max_depth_reverse, max_depth_random uint
 	for n := uint(1); n < 16; n++ {
 		N := 1 << n
 		for ; i < N; i++ {
 			tree_sequential.insert(Int(i))
-			_, depth := tree_sequential.find(Int(i))
-			if depth > max_depth_sequential { max_depth_sequential = depth }
+			tree_reverse.insert(Int(N - i))
 			tree_random.insert(Int(rand.Int()))
-			_, depth = tree_random.find(Int(i))
-			if depth > max_depth_random { max_depth_random = depth }
 		}
-		if max_depth_sequential > 2 * n || max_depth_random > 2 * n {
+		max_depth_sequential = max_depth(tree_sequential.root)
+		max_depth_reverse = max_depth(tree_reverse.root)
+		max_depth_random  = max_depth(tree_random.root)
+		if max_depth_sequential > 2 * n || max_depth_reverse > 2 * n || max_depth_random > 2 * n {
 			t.Errorf("%v : %v : %v : %v\n", n, i, max_depth_sequential, max_depth_random)
 		}
 	}
