@@ -2,11 +2,12 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-package sort
+package sort_test
 
 import (
 	"testing"
 	"rand"
+	"mudlark/sort"
 //	"fmt"
 //	"reflect"
 )
@@ -17,6 +18,21 @@ func (i Int) Less(other interface{}) bool {
 	return int(i) < int(other.(Int))
 }
 
+type IntArray []Int
+
+func (this IntArray) iterate(c chan<- sort.Item) {
+	for _, i := range this {
+		c <- i
+	}
+	close(c)
+}
+
+func (this IntArray) iterator() <-chan sort.Item {
+	c := make(chan sort.Item)
+	go this.iterate(c)
+	return c
+}
+
 type Real float64
 
 func (r Real) Less(other interface{}) bool {
@@ -25,13 +41,13 @@ func (r Real) Less(other interface{}) bool {
 
 func TestMakeSortSlice(t *testing.T) {
 	const sz = 1000
-	ints := make([]Item, sz)
+	ints := make([]sort.Item, sz)
 	for i := 0; i < sz; i++ {
 		ints[i] = Int(rand.Intn(8 * sz / 10))
 	}
 	count := 0
-	var lasti Item
-	for _, i := range SortSlice(ints) {
+	var lasti sort.Item
+	for _, i := range sort.SortSlice(ints) {
 		if count != 0 && i.Less(lasti) {
 			t.Errorf("Unexpected order: %v : %v", i, lasti)
 		}
@@ -40,6 +56,40 @@ func TestMakeSortSlice(t *testing.T) {
 	}
 	if count != sz {
 		t.Errorf("Expected count %v: got %v", sz, count)
+	}
+}
+
+func TestMakeSortChan(t *testing.T) {
+	const sz = 1000
+	ints := make(IntArray, sz)
+	for i := 0; i < sz; i++ {
+		ints[i] = Int(rand.Intn(8 * sz / 10))
+	}
+	count := 0
+	var lasti sort.Item
+	for i := range sort.SortChan(ints.iterator()) {
+		if count != 0 && i.Less(lasti) {
+			t.Errorf("Unexpected order: %v : %v", i, lasti)
+		}
+		count++
+		lasti = i
+	}
+	if count != sz {
+		t.Errorf("Expected count %v: got %v", sz, count)
+	}
+}
+
+func BenchmarkSortSlice(b *testing.B) {
+	const sz = 1000
+	b.SetBytes(sz)
+	for i := 0; i < b.N; i++ {
+		b.StopTimer()
+		ints := make([]sort.Item, sz)
+		for i := 0; i < sz; i++ {
+			ints[i] = Int(rand.Intn(8 * sz / 10))
+		}
+		b.StartTimer()
+		ints = sort.SortSlice(ints)
 	}
 }
 

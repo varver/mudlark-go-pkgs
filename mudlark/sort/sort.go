@@ -79,6 +79,7 @@ func tree_to_chan(tree llrb_tree.Tree, order int) (channel chan Item) {
 	for item := range tree.Iter(order) {
 		channel <- item
 	}
+	close(channel)
 	return channel
 }
 
