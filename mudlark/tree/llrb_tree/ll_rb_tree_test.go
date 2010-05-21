@@ -87,7 +87,7 @@ func TestMakell_rb_tree_ptr(t *testing.T) {
 func TestMakeinsert(t *testing.T) {
 	var tree ll_rb_tree
 	var failures int
-	for i := 0; i < 1000; i++ {
+	for i := 0; i < 10; i++ {
 		iitem := Int(rand.Intn(800))
 		iin, _ := tree.find(iitem)
 		tsz := tree.count
@@ -98,28 +98,11 @@ func TestMakeinsert(t *testing.T) {
 			}
 		} else {
 			if tsz + 1 != tree.count {
-				t.Errorf("Count uchanged (insert i): Expected %v got: %v", tsz + 1, tree.count)
+				t.Errorf("Count unchanged (insert i): Expected %v got: %v", tsz + 1, tree.count)
 			}
 		}
 		if iin, _ = tree.find(iitem); !iin {
 			t.Errorf("Inserted %v not found", iitem)
-			failures++
-		}
-		ritem := Real(rand.Float64())
-		rin, _:= tree.find(ritem)
-		tsz = tree.count
-		tree.insert(ritem)
-		if rin {
-			if tsz != tree.count {
-				t.Errorf("Count changed (insert i): Expected %v got: %v", tsz, tree.count)
-			}
-		} else {
-			if tsz + 1 != tree.count {
-				t.Errorf("Count uchanged (insert i): Expected %v got: %v", tsz + 1, tree.count)
-			}
-		}
-		if rin, _ = tree.find(ritem); !rin {
-			t.Errorf("Inserted %v not found", ritem)
 			failures++
 		}
 	}
@@ -141,23 +124,10 @@ func TestMakeinsert_keep_duplicates(t *testing.T) {
 		tsz := tree.count
 		tree.insert(iitem)
 		if tsz + 1 != tree.count {
-			t.Errorf("Count uchanged (insert i): Expected %v got: %v", tsz + 1, tree.count)
+			t.Errorf("Count unchanged (insert i): Expected %v got: %v", tsz + 1, tree.count)
 		}
 		if iin, _ := tree.find(iitem); !iin {
 			t.Errorf("Inserted %v not found", iitem)
-			failures++
-		}
-		ritem := Real(rand.Float64())
-		if found, _ := tree.find(ritem); found {
-			duplicates_found = true
-		}
-		tsz = tree.count
-		tree.insert(ritem)
-		if tsz + 1 != tree.count {
-			t.Errorf("Count uchanged (insert i): Expected %v got: %v", tsz + 1, tree.count)
-		}
-		if rin, _ := tree.find(ritem); !rin {
-			t.Errorf("Inserted %v not found", ritem)
 			failures++
 		}
 	}
@@ -175,12 +145,30 @@ func TestMakeiterate(t *testing.T) {
 	for i := 0; i < 10000; i++ {
 		tree.insert(Int(rand.Int()))
 		count++
-		tree.insert(Real(rand.Float64()))
-		count++
 	}
 	for item := range tree.iterator(PRE_ORDER) {
-		if cmp_type(item, Int(0)) == 0 {
+		if item.Less(Int(0)) {
 			// shut compiler up
+		}
+		count--
+	}
+	if count != 0 {
+		t.Errorf("%v count", count)
+	}
+}
+
+func TestMakeiterate_in_order(t *testing.T) {
+	var tree ll_rb_tree
+	var count int
+	for i := 0; i < 10000; i++ {
+		tree.insert(Int(rand.Int()))
+		count++
+	}
+	max_count := count
+	lastItem := Int(0)
+	for item := range tree.iterator(IN_ORDER) {
+		if count < max_count && item.Less(lastItem) {
+			t.Errorf("%v !< %v", item, lastItem)
 		}
 		count--
 	}
