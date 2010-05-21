@@ -221,30 +221,58 @@ func copy(node *ll_rb_node) *ll_rb_node {
 	return clone
 }
 
-type ll_rb_tree struct {
+// Set is a set of hetrogeneous objects whos types implement the Item
+// interface. Instances of Set must be created using New()
+// before use.  E.g.:
+//	var s Set = heteroset.New(item1, ....)
+type Set struct {
 	root *ll_rb_node
 	count uint
 }
 
-func (this ll_rb_tree) find(item Item) (found bool, iterations uint) {
+// Make a Set. The optional Item parameters will be used to initialize the set's
+// contents.
+func New(items ...Item) (set *Set) {
+	set = new(Set)
+	for _, item := range items {
+		set.Add(item)
+	}
+	return
+}
+
+// Len returns the number of items in the set.
+func (this *Set) Cardinality() uint {
+	return this.count
+}
+
+// Make a copy of this set.
+func (this *Set) Copy() (set *Set) {
+	set = new(Set)
+	set.root = copy(this.root)
+	set.count = this.count
+	return
+}
+
+// Is there an instance equal to item in the set.
+func (this *Set) Has(item Item) (has bool) {
 	if this.count == 0 {
 		return
 	}
-	for node := this.root; node != nil && !found; {
-		iterations++
+	for node := this.root; node != nil && !has; {
 		switch cmp := node.compare_item(item); {
 		case cmp > 0:
 			node = node.left
 		case cmp < 0:
 			node = node.right
 		default:
-			found = true
+			has = true
 		}
 	}
 	return
 }
 
-func (this *ll_rb_tree) insert(item Item) {
+// Add an item to the set.
+func (this *Set) Add(item Item) {
 	var inserted bool
 	this.root, inserted = insert(this.root, item)
 	if inserted {
@@ -253,7 +281,8 @@ func (this *ll_rb_tree) insert(item Item) {
 	this.root.red = false
 }
 
-func (this *ll_rb_tree) delete(item Item) {
+// Remove item from the set.
+func (this *Set) Remove(item Item) {
 	var deleted bool
 	this.root, deleted = delete(this.root, item)
 	if deleted {
@@ -262,61 +291,40 @@ func (this *ll_rb_tree) delete(item Item) {
 	this.root.red = false
 }
 
-func (this ll_rb_tree) iterator() <-chan Item {
+// Iterate over the set members in unspecified order.
+func (this *Set) Iter() <-chan Item {
 	c := make(chan Item)
 	go iterate(this.root, c)
 	return c
 }
 
-// Set is a set of hetrogeneous objects whos types implement the Item
-// interface. Instances of Set must be initialized using Make()
-// before use.  E.g.:
-//	var s Set = heteroset.Make(item1, ....)
-type Set struct {
-	Data *ll_rb_tree
-}
-
-// Make a Set. The optional Item parameters will be used to initialize the set's
-// contents.
-func Make(items ...Item) (set Set) {
-	set.Data = new(ll_rb_tree)
-	for _, item := range items {
-		set.Data.insert(item)
+func in_size_order(setA, setB *Set) (smallest, other *Set) {
+	if setA.Cardinality() < setB.Cardinality() {
+		smallest, other = setA, setB
+	} else {
+		smallest, other = setB, setA
 	}
 	return
 }
-
-// Make a copy of this set.
-func (this Set) Copy() (set Set) {
-	set.Data.root = copy(this.Data.root)
-	set.Data.count = this.Data.count
-	return
+// Disjoint returns true if setA and setB have no members in common
+func Disjoint(setA, setB *Set) bool {
+	smallest, other := in_size_order(setA, setB)
+	for item := range smallest.Iter() {
+		if other.Has(item) {
+			return false
+		}
+	}
+	return true
 }
 
-// Len returns the number of items in the set.
-func (this Set) Len() uint {
-	return this.Data.count
+// Overlap returns true if setA and setB have at least one members common
+func Overlap(setA, setB *Set) bool {
+	smallest, other := in_size_order(setA, setB)
+	for item := range smallest.Iter() {
+		if other.Has(item) {
+			return true
+		}
+	}
+	return false
 }
-
-// Add an item to the set.
-func (this *Set) Add(item Item) {
-	this.Data.insert(item)
-}
-
-// Remove item from the set.
-func (this *Set) Remove(item Item) {
-	this.Data.delete(item)
-}
-
-// Is there an instance equal to item in the set.
-func (this *Set) Has(item Item) (found bool) {
-	found, _ = this.Data.find(item)
-	return
-}
-
-// Iterate over the set members in unspecified order.
-func (this Set) Iter() <-chan Item {
-	return this.Data.iterator()
-}
-
 

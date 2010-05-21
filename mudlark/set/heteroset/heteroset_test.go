@@ -30,124 +30,6 @@ func print_node(node *ll_rb_node) {
 	print_node(node.right)
 }
 
-func TestMakell_rb_tree(t *testing.T) {
-	var tree ll_rb_tree
-	if reflect.Typeof(tree).String() != "heteroset.ll_rb_tree" {
-		t.Errorf("Expected type \"heteroset.ll_rb_tree\": got %v", reflect.Typeof(tree).String())
-	}
-	if tree.count != 0 {
-		t.Errorf("Expected bitcount 0: got %v", tree.count)
-	}
-	if tree.root != nil {
-		t.Errorf("Root is not nil")
-	}
-	found, iterations := tree.find(Int(1))
-	if found {
-		t.Errorf("Unexpectedly found Int")
-	}
-	if iterations != 0 {
-		t.Errorf("Expected 0 iteretions got: %v", iterations)
-	}
-	found, iterations = tree.find(Real(1.0))
-	if found {
-		t.Errorf("Unexpectedly found Real")
-	}
-	if iterations != 0 {
-		t.Errorf("Expected 0 iteretions got: %v", iterations)
-	}
-}
-
-func TestMakell_rb_tree_ptr(t *testing.T) {
-	tree := new(ll_rb_tree)
-	if reflect.Typeof(tree).String() != "*heteroset.ll_rb_tree" {
-		t.Errorf("Expected type \"*heteroset.ll_rb_tree\": got %v", reflect.Typeof(tree).String())
-	}
-	if tree.count != 0 {
-		t.Errorf("Expected bitcount 0: got %v", tree.count)
-	}
-	if tree.root != nil {
-		t.Errorf("Root is not nil")
-	}
-	found, iterations := tree.find(Int(1))
-	if found {
-		t.Errorf("Unexpectedly found Int")
-	}
-	if iterations != 0 {
-		t.Errorf("Expected 0 iteretions got: %v", iterations)
-	}
-	found, iterations = tree.find(Real(1.0))
-	if found {
-		t.Errorf("Unexpectedly found Real")
-	}
-	if iterations != 0 {
-		t.Errorf("Expected 0 iteretions got: %v", iterations)
-	}
-}
-
-func TestMakeinsert(t *testing.T) {
-	var tree ll_rb_tree
-	var failures int
-	for i := 0; i < 1000; i++ {
-		iitem := Int(rand.Intn(800))
-		iin, _ := tree.find(iitem)
-		tsz := tree.count
-		tree.insert(iitem)
-		if iin {
-			if tsz != tree.count {
-				t.Errorf("Count changed (insert i): Expected %v got: %v", tsz, tree.count)
-			}
-		} else {
-			if tsz + 1 != tree.count {
-				t.Errorf("Count uchanged (insert i): Expected %v got: %v", tsz + 1, tree.count)
-			}
-		}
-		if iin, _ = tree.find(iitem); !iin {
-			t.Errorf("Inserted %v not found", iitem)
-			failures++
-		}
-		ritem := Real(rand.Float64())
-		rin, _:= tree.find(ritem)
-		tsz = tree.count
-		tree.insert(ritem)
-		if rin {
-			if tsz != tree.count {
-				t.Errorf("Count changed (insert i): Expected %v got: %v", tsz, tree.count)
-			}
-		} else {
-			if tsz + 1 != tree.count {
-				t.Errorf("Count uchanged (insert i): Expected %v got: %v", tsz + 1, tree.count)
-			}
-		}
-		if rin, _ = tree.find(ritem); !rin {
-			t.Errorf("Inserted %v not found", ritem)
-			failures++
-		}
-	}
-	if failures != 0 {
-		t.Errorf("%v failures", failures)
-	}
-}
-
-func TestMakeiterate(t *testing.T) {
-	var tree ll_rb_tree
-	var count int
-	for i := 0; i < 10000; i++ {
-		tree.insert(Int(rand.Int()))
-		count++
-		tree.insert(Real(rand.Float64()))
-		count++
-	}
-	for item := range tree.iterator() {
-		if cmp_type(item, Int(0)) == 0 {
-			// shut compiler up
-		}
-		count--
-	}
-	if count != 0 {
-		t.Errorf("%v count", count)
-	}
-}
-
 func max_depth(node *ll_rb_node) uint {
 	if node == nil { return 0 }
 	ld := max_depth(node.left)
@@ -158,23 +40,138 @@ func max_depth(node *ll_rb_node) uint {
 	return rd + 1
 }
 
-// test that depth of tree doesn't exceed 2 * log2(cardinality) using:
+func TestMakeSet(t *testing.T) {
+	set := New()
+	if reflect.Typeof(set).String() != "*heteroset.Set" {
+		t.Errorf("Expected type \"*heteroset.Set\": got %v", reflect.Typeof(set).String())
+	}
+	if set.Cardinality() != 0 {
+		t.Errorf("Expected bitcount 0: got %v", set.Cardinality())
+	}
+	if set.root != nil {
+		t.Errorf("Root is not nil")
+	}
+	has := set.Has(Int(1))
+	if has {
+		t.Errorf("Unexpectedly has Int")
+	}
+	if max_depth(set.root) != 0 {
+		t.Errorf("Expected 0 max depth got: %v", max_depth(set.root))
+	}
+	has = set.Has(Real(1.0))
+	if has {
+		t.Errorf("Unexpectedly has Real")
+	}
+	if max_depth(set.root) != 0 {
+		t.Errorf("Expected 0 max depth got: %v", max_depth(set.root))
+	}
+}
+
+func TestMakeSetWithArgs(t *testing.T) {
+	set := New(Int(1), Int(2), Int(2), Real(3), Int(4), Real(4))
+	if reflect.Typeof(set).String() != "*heteroset.Set" {
+		t.Errorf("Expected type \"*heteroset.Set\": got %v", reflect.Typeof(set).String())
+	}
+	if set.Cardinality() != 5 {
+		t.Errorf("Expected count 5: got %v", set.Cardinality())
+	}
+	if set.root == nil {
+		t.Errorf("Root is nil")
+	}
+	has := set.Has(Int(1))
+	if !has {
+		t.Errorf("Denies having Int(1)")
+	}
+	if max_depth(set.root) == 0 {
+		t.Errorf("Expected 0 max depth got: %v", max_depth(set.root))
+	}
+	has = set.Has(Real(1.0))
+	if has {
+		t.Errorf("Unexpectedly has Real(1.0)")
+	}
+}
+
+func TestMakeinsert(t *testing.T) {
+	set := New()
+	var failures int
+	for i := 0; i < 1000; i++ {
+		iitem := Int(rand.Intn(800))
+		iin := set.Has(iitem)
+		tsz := set.Cardinality()
+		set.Add(iitem)
+		if iin {
+			if tsz != set.Cardinality() {
+				t.Errorf("Count changed (insert i): Expected %v got: %v", tsz, set.Cardinality())
+			}
+		} else {
+			if tsz + 1 != set.Cardinality() {
+				t.Errorf("Count uchanged (insert i): Expected %v got: %v", tsz + 1, set.Cardinality())
+			}
+		}
+		if iin = set.Has(iitem); !iin {
+			t.Errorf("Inserted %v not has", iitem)
+			failures++
+		}
+		ritem := Real(rand.Float64())
+		rin := set.Has(ritem)
+		tsz = set.Cardinality()
+		set.Add(ritem)
+		if rin {
+			if tsz != set.Cardinality() {
+				t.Errorf("Count changed (insert i): Expected %v got: %v", tsz, set.Cardinality())
+			}
+		} else {
+			if tsz + 1 != set.Cardinality() {
+				t.Errorf("Count uchanged (insert i): Expected %v got: %v", tsz + 1, set.Cardinality())
+			}
+		}
+		if rin = set.Has(ritem); !rin {
+			t.Errorf("Inserted %v not has", ritem)
+			failures++
+		}
+	}
+	if failures != 0 {
+		t.Errorf("%v failures", failures)
+	}
+}
+
+func TestMakeiterate(t *testing.T) {
+	set := New()
+	var count int
+	for i := 0; i < 10000; i++ {
+		set.Add(Int(rand.Int()))
+		count++
+		set.Add(Real(rand.Float64()))
+		count++
+	}
+	for item := range set.Iter() {
+		if cmp_type(item, Int(0)) == 0 {
+			// shut compiler up
+		}
+		count--
+	}
+	if count != 0 {
+		t.Errorf("%v count", count)
+	}
+}
+
+// test that depth of set doesn't exceed 2 * log2(cardinality) using:
 //		random (best case) input
 //		sequential (worst case) input
 func TestMakedepth_properties(t *testing.T) {
-	var tree_sequential, tree_reverse, tree_random ll_rb_tree
+	set_sequential, set_reverse, set_random := New(), New(), New()
 	var i int
 	var max_depth_sequential, max_depth_reverse, max_depth_random uint
 	for n := uint(1); n < 16; n++ {
 		N := 1 << n
 		for ; i < N; i++ {
-			tree_sequential.insert(Int(i))
-			tree_reverse.insert(Int(N - i))
-			tree_random.insert(Int(rand.Int()))
+			set_sequential.Add(Int(i))
+			set_reverse.Add(Int(N - i))
+			set_random.Add(Int(rand.Int()))
 		}
-		max_depth_sequential = max_depth(tree_sequential.root)
-		max_depth_reverse = max_depth(tree_reverse.root)
-		max_depth_random  = max_depth(tree_random.root)
+		max_depth_sequential = max_depth(set_sequential.root)
+		max_depth_reverse = max_depth(set_reverse.root)
+		max_depth_random  = max_depth(set_random.root)
 		if max_depth_sequential > 2 * n || max_depth_reverse > 2 * n || max_depth_random > 2 * n {
 			t.Errorf("%v : %v : %v : %v\n", n, i, max_depth_sequential, max_depth_random)
 		}
