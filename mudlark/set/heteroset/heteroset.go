@@ -317,8 +317,8 @@ func Disjoint(setA, setB *Set) bool {
 	return true
 }
 
-// Overlap returns true if setA and setB have at least one members common
-func Overlap(setA, setB *Set) bool {
+// Intersect returns true if setA and setB have at least one members common
+func Intersect(setA, setB *Set) bool {
 	smallest, other := in_size_order(setA, setB)
 	for item := range smallest.Iter() {
 		if other.Has(item) {

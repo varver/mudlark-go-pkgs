@@ -178,3 +178,41 @@ func TestMakedepth_properties(t *testing.T) {
 	}
 }
 
+func make_Int_set_serial(begin, end Int) (set *Set) {
+	set = New()
+	for i := begin; i <= end; i++ {
+		set.Add(i)
+	}
+	return
+}
+
+func TestDisjointIntersect(t *testing.T) {
+	setA := make_Int_set_serial(-100, 0)
+	setB := make_Int_set_serial(1, 100)
+	setC := make_Int_set_serial(-50, 50)
+	if Intersect(setA, setB) {
+		t.Errorf("setA and setB should be disjoint")
+	}
+	if !Intersect(setA, setC) {
+		t.Errorf("setA and setC should intersect")
+	}
+	if Intersect(setA, setB) && Disjoint(setA, setB) {
+		t.Errorf("Intersect(A, B) and Disjoint(A, B) should be mutually exclusive")
+	}
+	if Intersect(setA, setC) && Disjoint(setA, setC) {
+		t.Errorf("Intersect(A, B) and Disjoint(A, B) should be mutually exclusive")
+	}
+	if Intersect(setA, setB) != Intersect(setB, setA) {
+		t.Errorf("Intersect(A, B) and Intersect(B, A) should be equal")
+	}
+	if Intersect(setA, setC) != Intersect(setC, setA) {
+		t.Errorf("Intersect(A, C) and Intersect(C, A) should be equal")
+	}
+	if Disjoint(setA, setB) != Disjoint(setB, setA) {
+		t.Errorf("Disjoint(A, B) and Disjoint(B, A) should be equal")
+	}
+	if Disjoint(setA, setC) != Disjoint(setC, setA) {
+		t.Errorf("Disjoint(A, C) and Disjoint(C, A) should be equal")
+	}
+}
+
