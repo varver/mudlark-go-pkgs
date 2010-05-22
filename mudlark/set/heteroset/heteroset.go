@@ -197,17 +197,17 @@ func delete(node *ll_rb_node, item Item) (*ll_rb_node, bool) {
 // be greater than 2Log2(N) where N is the number of nodes in the tree and
 // (in general) will be approximately Log2(N).
 
-func iterate_preorder(node *ll_rb_node, c chan<- Item) {
+func iterate_inorder(node *ll_rb_node, c chan<- Item) {
 	if node == nil {
 		return
 	}
+	iterate_inorder(node.left, c)
 	c <- node.item
-	iterate_preorder(node.left, c)
-	iterate_preorder(node.right, c)
+	iterate_inorder(node.right, c)
 }
 
 func iterate(node *ll_rb_node, c chan<- Item) {
-	iterate_preorder(node, c)
+	iterate_inorder(node, c)
 	close(c)
 }
 
@@ -293,7 +293,7 @@ func (this *Set) Remove(item Item) {
 
 // Iterate over the set members in unspecified order.
 func (this *Set) Iter() <-chan Item {
-	c := make(chan Item)
+	c := make(chan Item, this.count)
 	go iterate(this.root, c)
 	return c
 }
@@ -317,7 +317,7 @@ func Disjoint(setA, setB *Set) bool {
 	return true
 }
 
-// Intersect returns true if setA and setB have at least one members common
+// Intersect returns true if setA and setB have at least one member common
 func Intersect(setA, setB *Set) bool {
 	smallest, other := in_size_order(setA, setB)
 	for item := range smallest.Iter() {
