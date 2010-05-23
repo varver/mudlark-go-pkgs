@@ -216,3 +216,38 @@ func TestDisjointIntersect(t *testing.T) {
 	}
 }
 
+func TestUnion(t *testing.T) {
+	setA := make_Int_set_serial(-100, 0)
+	setB := make_Int_set_serial(1, 100)
+	setC := make_Int_set_serial(-50, 50)
+	setAuB := Union(setA, setB)
+	setAuC := Union(setA, setC)
+	if !Intersect(setA, setAuB) || !Intersect(setB, setAuB) {
+		t.Errorf("setAuB should intersect with both setA and SetB")
+	}
+	if setAuB.Cardinality() != setA.Cardinality() + setB.Cardinality() {
+		t.Errorf("Cardinality of a union of disjoint sets should be the sum of their cardinalities")
+	}
+	for item := range setAuB.Iter() {
+		if !setA.Has(item) && !setB.Has(item) {
+			t.Errorf("Items in setAuB should be in either setA or setB")
+		}
+	}
+	if !Intersect(setA, setAuC) || !Intersect(setC, setAuC) {
+		t.Errorf("setAuC should intersect with both setA and SetC")
+	}
+	var incommon uint
+	for item := range setAuC.Iter() {
+		if setA.Has(item) {
+			if setC.Has(item) {
+				incommon++
+			}
+		} else if !setC.Has(item) {
+			t.Errorf("Items in setAuC should be in either setA or setC")
+		}
+	}
+	if setAuC.Cardinality() != setA.Cardinality() + setC.Cardinality() - incommon {
+		t.Errorf("Cardinality of a union of intesecting sets should be the sum of their cardinalities minus the size of their intersection")
+	}
+}
+

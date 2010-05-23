@@ -328,3 +328,15 @@ func Intersect(setA, setB *Set) bool {
 	return false
 }
 
+// Union returns a set that is the union of setA and setB
+//	for any item i:
+//		(setA.Has(i) || setB.Has(i)) == Union(setA, setB).Has(i)
+func Union(setA, setB *Set) (set *Set) {
+	smallest, other := in_size_order(setA, setB)
+	set = other.Copy()
+	for item := range smallest.Iter() {
+		set.Add(item)
+	}
+	return
+}
+
