@@ -291,7 +291,7 @@ func (this *Set) Remove(item Item) {
 	this.root.red = false
 }
 
-// Iterate over the set members in unspecified order.
+// Iterate over the set members in arbitrary type order and in order within type.
 func (this *Set) Iter() <-chan Item {
 	c := make(chan Item, this.count)
 	go iterate(this.root, c)
@@ -329,13 +329,27 @@ func Intersect(setA, setB *Set) bool {
 }
 
 // Union returns a set that is the union of setA and setB
-//	for any item i:
+//	for any Item i:
 //		(setA.Has(i) || setB.Has(i)) == Union(setA, setB).Has(i)
 func Union(setA, setB *Set) (set *Set) {
 	smallest, other := in_size_order(setA, setB)
 	set = other.Copy()
 	for item := range smallest.Iter() {
 		set.Add(item)
+	}
+	return
+}
+
+// Intersection returns a set that is the intersection of setA and setB
+//	for any Item i:
+//		(setA.Has(i) && setB.Has(i)) == Intersection(setA, setB).Has(i)
+func Intersection(setA, setB *Set) (set *Set) {
+	smallest, other := in_size_order(setA, setB)
+	set = New()
+	for item := range smallest.Iter() {
+		if other.Has(item) {
+			set.Add(item)
+		}
 	}
 	return
 }
