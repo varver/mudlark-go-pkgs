@@ -369,6 +369,33 @@ func Equal(setA, setB *Set) bool {
 	return Subset(setA, setB)
 }
 
+// Less() implements Item.Less() method for sets so that sets of sets are
+// possible
+func (this *Set) Less(other interface{}) bool {
+	thisiter := this.Iter()
+	otheriter := other.(*Set).Iter()
+	for {
+		thisitem, this_ok := <- thisiter
+		otheritem, other_ok := <- otheriter
+		if !this_ok {
+			return !other_ok
+		} else if !other_ok {
+			return false
+		}
+		ct := cmp_type(thisitem, otheritem)
+		if ct == 0 {
+			if thisitem.Less(otheritem) {
+				return true
+			} else if otheritem.Less(thisitem) {
+				return false
+			}
+		} else {
+			return ct < 0
+		}
+	}
+	return false
+}
+
 // Union returns a set that is the union of setA and setB
 //	for any Item i:
 //		(setA.Has(i) || setB.Has(i)) == Union(setA, setB).Has(i)
