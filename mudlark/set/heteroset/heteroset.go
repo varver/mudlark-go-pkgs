@@ -306,6 +306,7 @@ func in_size_order(setA, setB *Set) (smallest, other *Set) {
 	}
 	return
 }
+
 // Disjoint returns true if setA and setB have no members in common
 func Disjoint(setA, setB *Set) bool {
 	smallest, other := in_size_order(setA, setB)
@@ -326,6 +327,46 @@ func Intersect(setA, setB *Set) bool {
 		}
 	}
 	return false
+}
+
+// Subset returns true if every member of setA is also member of setB
+//	Intersection(setA, setB) == setA
+func Subset(setA, setB *Set) bool {
+	if setA.Cardinality() > setB.Cardinality() { return false; }
+	for item := range setA.Iter() {
+		if !setB.Has(item) {
+			return false
+		}
+	}
+	return true
+}
+
+// ProperSubset returns true if every member of setA is also member of setB
+// and they are not equal
+//	Intersection(setA, setB) == setA && setA != setB
+func ProperSubset(setA, setB *Set) bool {
+	if setA.Cardinality() >= setB.Cardinality() { return false; }
+	return Subset(setA, setB)
+}
+
+// Superset returns true if every member of setB is also member of setA
+//	Intersection(setA, setB) == setB
+func Superset(setA, setB *Set) bool {
+	return Subset(setB, setA)
+}
+
+// Propersupeset returns true if every member of setB is also member of setA
+// and they are not equal
+//	Intersection(setA, setB) == setA && setA != setB
+func ProperSuperset(setA, setB *Set) bool {
+	return ProperSubset(setB, setA)
+}
+
+// Equal returns true if setA and setB contain exactly the same members
+//	Intersection(setA, setB) == setA == setB
+func Equal(setA, setB *Set) bool {
+	if setA.Cardinality() != setB.Cardinality() { return false; }
+	return Subset(setA, setB)
 }
 
 // Union returns a set that is the union of setA and setB
