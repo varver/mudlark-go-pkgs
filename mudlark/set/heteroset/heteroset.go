@@ -1,15 +1,15 @@
 // Copyright 2010 -- Peter Williams, all rights reserved
-// Use of this source code is governed by a BSD-style
-// license that can be found in the LICENSE file.
+// Use of this source code is governed by the new BSD license.
 
-// Implement heterogenous sets
-
-// Using 2-3 left Leaning Red Black Binary Trees as the low level component.
+// The heteroset package implements heterogenous sets.
+//
+// (Uses 2-3 left Leaning Red Black Binary Trees as the low level component.
 // Based on the Java implementation described by Robert Sedgewick
 // in his paper entitled "Left-leaning Red-Black Trees"
 // available at: <www.cs.princeton.edu/~rs/talks/LLRB/LLRB.pdf>.
 // The principal difference (other than the conversion to Go) is that the items
-// being inserted combine the roles of both key and value.
+// being inserted combine the roles of both key and value and the items
+// being inserted do not have to be of the same type.)
 package heteroset
 
 import "reflect"
