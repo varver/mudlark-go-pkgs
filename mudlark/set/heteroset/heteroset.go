@@ -422,3 +422,35 @@ func Intersection(setA, setB *Set) (set *Set) {
 	return
 }
 
+// Difference returns a set that contains the items in setA minus any items in setB
+//	for any Item i:
+//		(setA.Has(i) && !setB.Has(i)) == Difference(setA, setB).Has(i)
+func Difference(setA, setB *Set) (set *Set) {
+	set = New()
+	for item := range setA.Iter() {
+		if !setB.Has(item) {
+			set.Add(item)
+		}
+	}
+	return
+}
+
+// SymmetricDifference returns a set that contains the items in setA minus or setB
+// but not both
+//	for any Item i:
+//		((setA.Has(i) && !setB.Has(i)) || (!setA.Has(i) && setB.Has(i))) == SymmetricDifference(setA, setB).Has(i)
+func SymmetricDifference(setA, setB *Set) (set *Set) {
+	set = New()
+	for item := range setA.Iter() {
+		if !setB.Has(item) {
+			set.Add(item)
+		}
+	}
+	for item := range setB.Iter() {
+		if !setA.Has(item) {
+			set.Add(item)
+		}
+	}
+	return
+}
+
