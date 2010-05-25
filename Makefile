@@ -22,7 +22,8 @@ all: install
 
 DIRS=\
 	mudlark/tree/llrb_tree\
-	mudlark/sort
+	mudlark/sort\
+	mudlark/set/heteroset
 
 NOTEST=
 
