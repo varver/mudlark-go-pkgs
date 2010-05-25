@@ -154,6 +154,26 @@ func TestMakeiterate(t *testing.T) {
 	}
 }
 
+func TestMakeiterateAsync(t *testing.T) {
+	set := New()
+	var count int
+	for i := 0; i < 10000; i++ {
+		set.Add(Int(rand.Int()))
+		count++
+		set.Add(Real(rand.Float64()))
+		count++
+	}
+	for item := range set.IterAsync() {
+		if cmp_type(item, Int(0)) == 0 {
+			// shut compiler up
+		}
+		count--
+	}
+	if count != 0 {
+		t.Errorf("%v count", count)
+	}
+}
+
 // test that depth of set doesn't exceed 2 * log2(cardinality) using:
 //		random (best case) input
 //		sequential (worst case) input

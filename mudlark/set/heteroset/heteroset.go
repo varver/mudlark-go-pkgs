@@ -293,8 +293,17 @@ func (this *Set) Remove(item Item) {
 
 // Iterate over the set members in arbitrary type order and in order within type.
 func (this *Set) Iter() <-chan Item {
-	c := make(chan Item, this.count)
+	c := make(chan Item)
 	go iterate(this.root, c)
+	return c
+}
+
+// Iterate asynchronously over the set members in arbitrary type order and in
+// order within type. This method uses more memory than Iter() and is only
+// recommended for use when circumstances preclude the use of Iter().
+func (this *Set) IterAsync() <-chan Item {
+	c := make(chan Item, this.count)
+	iterate(this.root, c)
 	return c
 }
 
