@@ -127,6 +127,9 @@ func insert(node *ll_rb_node, item Item) (*ll_rb_node, bool) {
 	case cmp < 0:
 		node.right, inserted = insert(node.right, item)
 	default:
+		// overwrite the existing equivalent item so that Sets are useful
+		// with (key, value) items
+		node.item = item
 	}
 	return fix_up(node), inserted
 }
@@ -253,25 +256,39 @@ func (this *Set) Copy() (set *Set) {
 	return
 }
 
-// Is there an instance equal to item in the set.
-func (this *Set) Has(item Item) (has bool) {
+// Find an instance equal to item in the set.
+// This function is useful in the case where the item has a (key, value)
+// structure and only the key is used for implementing Less() for using
+// a Set as a look up table.
+func (this *Set) Find(item Item) (instance Item, found bool) {
 	if this.count == 0 {
 		return
 	}
-	for node := this.root; node != nil && !has; {
+	for node := this.root; node != nil && !found; {
 		switch cmp := node.compare_item(item); {
 		case cmp > 0:
 			node = node.left
 		case cmp < 0:
 			node = node.right
 		default:
-			has = true
+			found = true
+			instance = node.item
 		}
 	}
 	return
 }
 
+// Is there an instance equal to item in the set.
+func (this *Set) Has(item Item) (has bool) {
+	_, has = this.Find(item)
+	return
+}
+
 // Add an item to the set.
+// If an Item equal to item is already present in the set it is overwritten.
+// This makes sets useful in the case where the items have a (key, value)
+// structure and only the key is used for implementing Less() for use as a
+// look up table.
 func (this *Set) Add(item Item) {
 	var inserted bool
 	this.root, inserted = insert(this.root, item)
