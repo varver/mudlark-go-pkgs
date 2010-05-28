@@ -12,13 +12,13 @@ import (
 
 type Int int
 
-func (i Int) Less(other interface{}) bool {
+func (i Int) Precedes(other interface{}) bool {
 	return int(i) < int(other.(Int))
 }
 
 type Real float64
 
-func (r Real) Less(other interface{}) bool {
+func (r Real) Precedes(other interface{}) bool {
 	return float64(r) < float64(other.(Real))
 }
 
@@ -146,7 +146,7 @@ func TestMakeiterate(t *testing.T) {
 		count++
 	}
 	for item := range tree.iterator(PRE_ORDER) {
-		if item.Less(Int(0)) {
+		if item.Precedes(Int(0)) {
 			// shut compiler up
 		}
 		count--
@@ -166,7 +166,7 @@ func TestMakeiterate_in_order(t *testing.T) {
 	max_count := count
 	lastItem := Int(0)
 	for item := range tree.iterator(IN_ORDER) {
-		if count < max_count && item.Less(lastItem) {
+		if count < max_count && item.Precedes(lastItem) {
 			t.Errorf("%v !< %v", item, lastItem)
 		}
 		count--

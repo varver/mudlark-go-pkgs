@@ -13,7 +13,7 @@ import (
 
 type Int int
 
-func (i Int) Less(other interface{}) bool {
+func (i Int) Precedes(other interface{}) bool {
 	return int(i) < int(other.(Int))
 }
 
@@ -34,7 +34,7 @@ func (this IntArray) iterator() <-chan sort.Item {
 
 type Real float64
 
-func (r Real) Less(other interface{}) bool {
+func (r Real) Precedes(other interface{}) bool {
 	return float64(r) < float64(other.(Real))
 }
 
@@ -47,7 +47,7 @@ func TestMakeSortSlice(t *testing.T) {
 	count := 0
 	var lasti sort.Item
 	for _, i := range sort.SortSlice(ints) {
-		if count != 0 && i.Less(lasti) {
+		if count != 0 && i.Precedes(lasti) {
 			t.Errorf("Unexpected order: %v : %v", i, lasti)
 		}
 		count++
@@ -67,7 +67,7 @@ func TestMakeSortChan(t *testing.T) {
 	count := 0
 	var lasti sort.Item
 	for i := range sort.SortChan(ints.iterator()) {
-		if count != 0 && i.Less(lasti) {
+		if count != 0 && i.Precedes(lasti) {
 			t.Errorf("Unexpected order: %v : %v", i, lasti)
 		}
 		count++

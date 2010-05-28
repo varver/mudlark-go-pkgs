@@ -13,13 +13,11 @@ package llrb_tree
 // Items to be inserted in a tree must implement this interface and must
 // satisfy the following formal requirements (where a, b and c are all
 // instances of the same type):
-//	 a.Less(b) implies !b.Less(a)
-//	 a.Less(b) && b.Less(c) implies a.Less(c)
-//	 !a.Less(b) && !b.Less(a) implies a == b
-// This method will only be used when reflect.Typeof() the calling object
-// matches reflect.Typeof() of other.
+//	 a.Precedes(b) implies !b.Precedes(a)
+//	 a.Precedes(b) && b.Precedes(c) implies a.Precedes(c)
+//	 !a.Precedes(b) && !b.Precedes(a) implies a == b
 type Item interface {
-	Less(other interface{}) bool
+	Precedes(other interface{}) bool
 }
 
 // LLRB tree node
@@ -80,9 +78,9 @@ func insert(node *ll_rb_node, item Item) (*ll_rb_node, bool) {
 		return new_ll_rb_node(item), true
 	}
 	inserted := false
-	if item.Less(node.item) {
+	if item.Precedes(node.item) {
 		node.left, inserted = insert(node.left, item)
-	} else if node.item.Less(item) {
+	} else if node.item.Precedes(item) {
 		node.right, inserted = insert(node.right, item)
 	} 
 	return fix_up(node), inserted
@@ -92,7 +90,7 @@ func insert_keep_duplicates(node *ll_rb_node, item Item) (*ll_rb_node) {
 	if node == nil {
 		return new_ll_rb_node(item)
 	}
-	if item.Less(node.item) {
+	if item.Precedes(node.item) {
 		node.left = insert_keep_duplicates(node.left, item)
 	} else {
 		node.right = insert_keep_duplicates(node.right, item)
@@ -132,7 +130,7 @@ func delete_left_most(node *ll_rb_node) *ll_rb_node {
 
 func delete(node *ll_rb_node, item Item) (*ll_rb_node, bool) {
 	var deleted bool
-	if item.Less(node.item) {
+	if item.Precedes(node.item) {
 		if !is_red(node.left) && !is_red(node.left.left) {
 			node = move_red_left(node)
 		}
@@ -141,13 +139,13 @@ func delete(node *ll_rb_node, item Item) (*ll_rb_node, bool) {
 		if is_red(node.left) {
 			node = rotate_right(node)
 		}
-		if !node.item.Less(item) && !item.Less(node.item) && node.right == nil {
+		if !node.item.Precedes(item) && !item.Precedes(node.item) && node.right == nil {
 			return nil, true
 		}
 		if !is_red(node.right) && !is_red(node.right.left) {
 			node = move_red_right(node)
 		}
-		if !node.item.Less(item) && !item.Less(node.item) {
+		if !node.item.Precedes(item) && !item.Precedes(node.item) {
 			left_most := node.right
 			for left_most.left != nil {
 				left_most = left_most.left
@@ -246,9 +244,9 @@ func (this ll_rb_tree) find(item Item) (found bool, iterations uint) {
 	}
 	for node := this.root; node != nil && !found; {
 		iterations++
-		if item.Less(node.item) {
+		if item.Precedes(node.item) {
 			node = node.left
-		} else if node.item.Less(item) {
+		} else if node.item.Precedes(item) {
 			node = node.right
 		} else {
 			found = true
@@ -333,8 +331,8 @@ func (this *Tree) Has(item Item) (found bool) {
 }
 
 // Iterate over the tree in the order specified:
-//	order == IN_ORDER: in order as defined by Item.Less()
-//	order == REVERSE_ORDER: in reverse order as defined by Item.Less()
+//	order == IN_ORDER: in order as defined by Item.Precedes()
+//	order == REVERSE_ORDER: in reverse order as defined by Item.Precedes()
 //	order == PRE_ORDER: in binary tree pre order
 //	order == POST_ORDER: in binary tree post order
 func (this Tree) Iter(order int) <-chan Item {

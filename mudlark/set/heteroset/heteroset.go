@@ -17,13 +17,13 @@ import "reflect"
 // The type of potential set items must implement this interface and must
 // satisfy the following formal requirements (where a, b and c are all
 // instances of the same type):
-//	 a.Less(b) implies !b.Less(a)
-//	 a.Less(b) && b.Less(c) implies a.Less(c)
-//	 !a.Less(b) && !b.Less(a) implies a == b
+//	 a.Precedes(b) implies !b.Precedes(a)
+//	 a.Precedes(b) && b.Precedes(c) implies a.Precedes(c)
+//	 !a.Precedes(b) && !b.Precedes(a) implies a == b
 // This method will only be used when reflect.Typeof() the calling object
 // matches reflect.Typeof() of other.
 type Item interface {
-	Less(other interface{}) bool
+	Precedes(other interface{}) bool
 }
 
 // LLRB tree node
@@ -69,9 +69,9 @@ func (this *ll_rb_node) compare_item(item Item) int {
 	if ct := cmp_type(this.item, item); ct != 0 {
 		return ct
 	}
-	if this.item.Less(item) {
+	if this.item.Precedes(item) {
 		return -1
-	} else if item.Less(this.item) {
+	} else if item.Precedes(this.item) {
 		return 1
 	}
 	return 0
@@ -258,7 +258,7 @@ func (this *Set) Copy() (set *Set) {
 
 // Find an instance equal to item in the set.
 // This function is useful in the case where the item has a (key, value)
-// structure and only the key is used for implementing Less() for using
+// structure and only the key is used for implementing Precedes() for using
 // a Set as a look up table.
 func (this *Set) Find(item Item) (instance Item, found bool) {
 	if this.count == 0 {
@@ -287,7 +287,7 @@ func (this *Set) Has(item Item) (has bool) {
 // Add an item to the set.
 // If an Item equal to item is already present in the set it is overwritten.
 // This makes sets useful in the case where the items have a (key, value)
-// structure and only the key is used for implementing Less() for use as a
+// structure and only the key is used for implementing Precedes() for use as a
 // look up table.
 func (this *Set) Add(item Item) {
 	var inserted bool
@@ -395,9 +395,9 @@ func Equal(setA, setB *Set) bool {
 	return Subset(setA, setB)
 }
 
-// Less() implements Item.Less() method for sets so that sets of sets are
+// Precedes() implements Item.Precedes() method for sets so that sets of sets are
 // possible
-func (this *Set) Less(other interface{}) bool {
+func (this *Set) Precedes(other interface{}) bool {
 	thisiter := this.Iter()
 	otheriter := other.(*Set).Iter()
 	for {
@@ -410,9 +410,9 @@ func (this *Set) Less(other interface{}) bool {
 		}
 		ct := cmp_type(thisitem, otheritem)
 		if ct == 0 {
-			if thisitem.Less(otheritem) {
+			if thisitem.Precedes(otheritem) {
 				return true
-			} else if otheritem.Less(thisitem) {
+			} else if otheritem.Precedes(thisitem) {
 				return false
 			}
 		} else {
