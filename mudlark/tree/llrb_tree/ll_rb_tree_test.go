@@ -58,7 +58,7 @@ func TestMakeTree(t *testing.T) {
 }
 
 func TestMakeTree_ptr(t *testing.T) {
-	tree := new(Tree)
+	tree := Make(true)
 	if reflect.Typeof(tree).String() != "*llrb_tree.Tree" {
 		t.Errorf("Expected type \"*llrb_tree.Tree\": got %v", reflect.Typeof(tree).String())
 	}
@@ -79,7 +79,7 @@ func TestMakeTree_ptr(t *testing.T) {
 }
 
 func TestMakeinsert(t *testing.T) {
-	var tree Tree
+	tree := Make(true)
 	var failures int
 	for i := 0; i < 10; i++ {
 		var ientry Item
@@ -107,10 +107,9 @@ func TestMakeinsert(t *testing.T) {
 }
 
 func TestMakeinsert_keep_duplicates(t *testing.T) {
-	var tree Tree
+	tree := Make(false)
 	var failures int
 	var duplicates_found bool
-	tree.keep_duplicates = true
 	for i := 0; i < 1000; i++ {
 		iitem := Int(rand.Intn(800))
 		if _, found := tree.Find(iitem); found {
@@ -135,7 +134,7 @@ func TestMakeinsert_keep_duplicates(t *testing.T) {
 }
 
 func TestMakeiterate(t *testing.T) {
-	var tree Tree
+	tree := Make(true)
 	var count int
 	for i := 0; i < 10000; i++ {
 		tree.Insert(Int(rand.Int()))
@@ -153,7 +152,7 @@ func TestMakeiterate(t *testing.T) {
 }
 
 func TestMakeiterate_in_order(t *testing.T) {
-	var tree Tree
+	tree := Make(true)
 	var count int
 	for i := 0; i < 10000; i++ {
 		tree.Insert(Int(rand.Int()))
