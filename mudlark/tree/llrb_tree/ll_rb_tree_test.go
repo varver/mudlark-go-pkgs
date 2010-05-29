@@ -36,10 +36,10 @@ func print_node(node *ll_rb_node) {
 	print_node(node.right)
 }
 
-func TestMakell_rb_tree(t *testing.T) {
-	var tree ll_rb_tree
-	if reflect.Typeof(tree).String() != "llrb_tree.ll_rb_tree" {
-		t.Errorf("Expected type \"llrb_tree.ll_rb_tree\": got %v", reflect.Typeof(tree).String())
+func TestMakeTree(t *testing.T) {
+	var tree Tree
+	if reflect.Typeof(tree).String() != "llrb_tree.Tree" {
+		t.Errorf("Expected type \"llrb_tree.Tree\": got %v", reflect.Typeof(tree).String())
 	}
 	if tree.count != 0 {
 		t.Errorf("Expected bitcount 0: got %v", tree.count)
@@ -47,20 +47,20 @@ func TestMakell_rb_tree(t *testing.T) {
 	if tree.root != nil {
 		t.Errorf("Root is not nil")
 	}
-	entry, found := tree.find(Int(1))
+	entry, found := tree.Find(Int(1))
 	if found || entry != nil {
 		t.Errorf("Unexpectedly found Int %v", entry)
 	}
-	rentry, rfound := tree.find(Real(1.0))
+	rentry, rfound := tree.Find(Real(1.0))
 	if rfound || rentry != nil {
 		t.Errorf("Unexpectedly found Real %v", rentry)
 	}
 }
 
-func TestMakell_rb_tree_ptr(t *testing.T) {
-	tree := new(ll_rb_tree)
-	if reflect.Typeof(tree).String() != "*llrb_tree.ll_rb_tree" {
-		t.Errorf("Expected type \"*llrb_tree.ll_rb_tree\": got %v", reflect.Typeof(tree).String())
+func TestMakeTree_ptr(t *testing.T) {
+	tree := new(Tree)
+	if reflect.Typeof(tree).String() != "*llrb_tree.Tree" {
+		t.Errorf("Expected type \"*llrb_tree.Tree\": got %v", reflect.Typeof(tree).String())
 	}
 	if tree.count != 0 {
 		t.Errorf("Expected bitcount 0: got %v", tree.count)
@@ -68,25 +68,25 @@ func TestMakell_rb_tree_ptr(t *testing.T) {
 	if tree.root != nil {
 		t.Errorf("Root is not nil")
 	}
-	entry, found := tree.find(Int(1))
+	entry, found := tree.Find(Int(1))
 	if found || entry != nil {
 		t.Errorf("Unexpectedly found Int %v", entry)
 	}
-	rentry, rfound := tree.find(Real(1.0))
+	rentry, rfound := tree.Find(Real(1.0))
 	if rfound || rentry != nil {
 		t.Errorf("Unexpectedly found Real %v", rentry)
 	}
 }
 
 func TestMakeinsert(t *testing.T) {
-	var tree ll_rb_tree
+	var tree Tree
 	var failures int
 	for i := 0; i < 10; i++ {
 		var ientry Item
 		iitem := Int(rand.Intn(800))
-		_, iin := tree.find(iitem)
+		_, iin := tree.Find(iitem)
 		tsz := tree.count
-		tree.insert(iitem)
+		tree.Insert(iitem)
 		if iin {
 			if tsz != tree.count {
 				t.Errorf("Count changed (insert i): Expected %v got: %v", tsz, tree.count)
@@ -96,7 +96,7 @@ func TestMakeinsert(t *testing.T) {
 				t.Errorf("Count unchanged (insert i): Expected %v got: %v", tsz + 1, tree.count)
 			}
 		}
-		if ientry, iin = tree.find(iitem); !iin || !Equal(ientry, iitem) {
+		if ientry, iin = tree.Find(iitem); !iin || !Equal(ientry, iitem) {
 			t.Errorf("Inserted %v not found", iitem)
 			failures++
 		}
@@ -107,21 +107,21 @@ func TestMakeinsert(t *testing.T) {
 }
 
 func TestMakeinsert_keep_duplicates(t *testing.T) {
-	var tree ll_rb_tree
+	var tree Tree
 	var failures int
 	var duplicates_found bool
 	tree.keep_duplicates = true
 	for i := 0; i < 1000; i++ {
 		iitem := Int(rand.Intn(800))
-		if _, found := tree.find(iitem); found {
+		if _, found := tree.Find(iitem); found {
 			duplicates_found = true
 		}
 		tsz := tree.count
-		tree.insert(iitem)
+		tree.Insert(iitem)
 		if tsz + 1 != tree.count {
 			t.Errorf("Count unchanged (insert i): Expected %v got: %v", tsz + 1, tree.count)
 		}
-		if _, iin := tree.find(iitem); !iin {
+		if _, iin := tree.Find(iitem); !iin {
 			t.Errorf("Inserted %v not found", iitem)
 			failures++
 		}
@@ -135,13 +135,13 @@ func TestMakeinsert_keep_duplicates(t *testing.T) {
 }
 
 func TestMakeiterate(t *testing.T) {
-	var tree ll_rb_tree
+	var tree Tree
 	var count int
 	for i := 0; i < 10000; i++ {
-		tree.insert(Int(rand.Int()))
+		tree.Insert(Int(rand.Int()))
 		count++
 	}
-	for item := range tree.iterator(PRE_ORDER) {
+	for item := range tree.Iter(PRE_ORDER) {
 		if item.Precedes(Int(0)) {
 			// shut compiler up
 		}
@@ -153,15 +153,15 @@ func TestMakeiterate(t *testing.T) {
 }
 
 func TestMakeiterate_in_order(t *testing.T) {
-	var tree ll_rb_tree
+	var tree Tree
 	var count int
 	for i := 0; i < 10000; i++ {
-		tree.insert(Int(rand.Int()))
+		tree.Insert(Int(rand.Int()))
 		count++
 	}
 	max_count := count
 	lastItem := Int(0)
-	for item := range tree.iterator(IN_ORDER) {
+	for item := range tree.Iter(IN_ORDER) {
 		if count < max_count && item.Precedes(lastItem) {
 			t.Errorf("%v !< %v", item, lastItem)
 		}
@@ -186,15 +186,15 @@ func max_depth(node *ll_rb_node) uint {
 //		random (best case) input
 //		sequential (worst case) input
 func TestMakedepth_properties(t *testing.T) {
-	var tree_sequential, tree_reverse, tree_random ll_rb_tree
+	var tree_sequential, tree_reverse, tree_random Tree
 	var i int
 	var max_depth_sequential, max_depth_reverse, max_depth_random uint
 	for n := uint(1); n < 16; n++ {
 		N := 1 << n
 		for ; i < N; i++ {
-			tree_sequential.insert(Int(i))
-			tree_reverse.insert(Int(N - i))
-			tree_random.insert(Int(rand.Int()))
+			tree_sequential.Insert(Int(i))
+			tree_reverse.Insert(Int(N - i))
+			tree_random.Insert(Int(rand.Int()))
 		}
 		max_depth_sequential = max_depth(tree_sequential.root)
 		max_depth_reverse = max_depth(tree_reverse.root)

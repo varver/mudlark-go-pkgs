@@ -18,7 +18,7 @@ type Item interface {
 	Precedes(other interface{}) bool
 }
 
-func slice_to_tree(slice []Item, filtered bool) (tree llrb_tree.Tree) {
+func slice_to_tree(slice []Item, filtered bool) (tree *llrb_tree.Tree) {
 	tree = llrb_tree.Make(filtered)
 	for _, item := range slice {
 		tree.Insert(item)
@@ -26,7 +26,7 @@ func slice_to_tree(slice []Item, filtered bool) (tree llrb_tree.Tree) {
 	return
 }
 
-func tree_to_slice(tree llrb_tree.Tree, order int) (slice []Item) {
+func tree_to_slice(tree *llrb_tree.Tree, order int) (slice []Item) {
 	slice = make([]Item, tree.Len())
 	var i int
 	for item := range tree.Iter(order) {
@@ -65,7 +65,7 @@ func ReverseSortFilteredSlice(slice []Item) (sorted []Item) {
 
 // Now do the same thing for channels (for use with iterators)
 
-func chan_to_tree(channel <-chan Item, filtered bool) (tree llrb_tree.Tree) {
+func chan_to_tree(channel <-chan Item, filtered bool) (tree *llrb_tree.Tree) {
 	tree = llrb_tree.Make(filtered)
 	for item := range channel {
 		tree.Insert(item)
@@ -73,7 +73,7 @@ func chan_to_tree(channel <-chan Item, filtered bool) (tree llrb_tree.Tree) {
 	return
 }
 
-func tree_to_chan(tree llrb_tree.Tree, order int) (channel chan Item) {
+func tree_to_chan(tree *llrb_tree.Tree, order int) (channel chan Item) {
 	channel = make(chan Item, tree.Len())
 	for item := range tree.Iter(order) {
 		channel <- item

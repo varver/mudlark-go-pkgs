@@ -234,13 +234,18 @@ func copy(node *ll_rb_node) *ll_rb_node {
 	return clone
 }
 
-type ll_rb_tree struct {
+// Tree is a Left-leaning Red/Black binary tree of objects that satisfy the
+// Item interface.  Instances of Tree must be initialized using Make()
+// before use.  E.g.:
+//	var t Tree = llrb_tree.Make(true)
+type Tree struct {
 	root *ll_rb_node
 	count uint
 	keep_duplicates bool
 }
 
-func (this ll_rb_tree) find(item Item) (entry Item, found bool) {
+// Find an item in the tree.  Useful for look up tables.
+func (this *Tree) Find(item Item) (entry Item, found bool) {
 	if this.count == 0 {
 		return
 	}
@@ -257,7 +262,11 @@ func (this ll_rb_tree) find(item Item) (entry Item, found bool) {
 	return
 }
 
-func (this *ll_rb_tree) insert(item Item) {
+// Insert item in the tree.  If the tree was initialized to filter out
+// duplicates the item being inserted will overwrite any equal item already
+// in the tree.  This allows the tree to be used as a look up table using
+// {key, value} item types where Precedes() ony uses the key.
+func (this *Tree) Insert(item Item) {
 	if this.keep_duplicates {
 		this.root = insert_keep_duplicates(this.root, item)
 		this.count++
@@ -271,7 +280,9 @@ func (this *ll_rb_tree) insert(item Item) {
 	this.root.red = false
 }
 
-func (this *ll_rb_tree) delete(item Item) {
+// Delete item from the tree. If item has duplicates in the tree only one will
+// be deleted.
+func (this *Tree) Delete(item Item) {
 	var deleted bool
 	this.root, deleted = delete(this.root, item)
 	if deleted {
@@ -280,74 +291,42 @@ func (this *ll_rb_tree) delete(item Item) {
 	this.root.red = false
 }
 
-func (this ll_rb_tree) iterator(order int) <-chan Item {
-	c := make(chan Item)
-	go iterate(this.root, c, order)
-	return c
-}
-
-// Tree is a Left-leaning Red/Black binary tree of objects that satisfy the
-// Item interface.  Instances of Tree must be initialized using Make()
-// before use.  E.g.:
-//	var t Tree = llrb_tree.Make(true)
-type Tree struct {
-	Data *ll_rb_tree
-}
-
-// Make a Tree. The parameter "filtered" determines whether duplicate items
-// will be filtered out (or kept) during insertion.
-func Make(filtered bool) (tree Tree) {
-	tree.Data = new(ll_rb_tree)
-	tree.Data.keep_duplicates = !filtered
-	return
-}
-
-// Make a copy of this tree.
-func (this Tree) Copy() (tree Tree) {
-	tree = Make(!this.Data.keep_duplicates)
-	tree.Data.root = copy(this.Data.root)
-	tree.Data.count = this.Data.count
-	return
-}
-
-// Len returns the number of items in the tree.
-func (this Tree) Len() uint {
-	return this.Data.count
-}
-
-// Insert item in the tree.  If the tree was initialized to filter out
-// duplicates the item being inserted will overwrite any equal item already
-// in the tree.  This allows the tree to be used as a look up table using
-// {key, value} item types where Precedes() ony uses the key.
-func (this *Tree) Insert(item Item) {
-	this.Data.insert(item)
-}
-
-// Delete item from the tree. If item has duplicates in the tree only one will
-// be deleted.
-func (this *Tree) Delete(item Item) {
-	this.Data.delete(item)
-}
-
-// Is there an instance equal to item in the tree.
-func (this *Tree) Has(item Item) (found bool) {
-	_, found = this.Data.find(item)
-	return
-}
-
-// Is there an instance equal to item in the tree.
-func (this *Tree) Find(item Item) (entry Item, found bool) {
-	entry, found = this.Data.find(item)
-	return
-}
-
 // Iterate over the tree in the order specified:
 //	order == IN_ORDER: in order as defined by Item.Precedes()
 //	order == REVERSE_ORDER: in reverse order as defined by Item.Precedes()
 //	order == PRE_ORDER: in binary tree pre order
 //	order == POST_ORDER: in binary tree post order
-func (this Tree) Iter(order int) <-chan Item {
-	return this.Data.iterator(order)
+func (this *Tree) Iter(order int) <-chan Item {
+	c := make(chan Item)
+	go iterate(this.root, c, order)
+	return c
+}
+
+// Make a Tree. The parameter "filtered" determines whether duplicate items
+// will be filtered out (or kept) during insertion.
+func Make(filtered bool) (tree *Tree) {
+	tree = new(Tree)
+	tree.keep_duplicates = !filtered
+	return
+}
+
+// Make a copy of this tree.
+func (this *Tree) Copy() (tree *Tree) {
+	tree = Make(!this.keep_duplicates)
+	tree.root = copy(this.root)
+	tree.count = this.count
+	return
+}
+
+// Len returns the number of items in the tree.
+func (this *Tree) Len() uint {
+	return this.count
+}
+
+// Is there an instance equal to item in the tree.
+func (this *Tree) Has(item Item) (found bool) {
+	_, found = this.Find(item)
+	return
 }
 
 
