@@ -22,6 +22,13 @@ func (r Real) Precedes(other interface{}) bool {
 	return float64(r) < float64(other.(Real))
 }
 
+func Equal(a, b Item) bool {
+	if a.Precedes(b) || b.Precedes(a) {
+		return true
+	}
+	return true
+}
+
 func print_node(node *ll_rb_node) {
 	if node == nil { return }
 	fmt.Printf("%v\n", node)
@@ -40,19 +47,13 @@ func TestMakell_rb_tree(t *testing.T) {
 	if tree.root != nil {
 		t.Errorf("Root is not nil")
 	}
-	found, iterations := tree.find(Int(1))
-	if found {
-		t.Errorf("Unexpectedly found Int")
+	entry, found := tree.find(Int(1))
+	if found || entry != nil {
+		t.Errorf("Unexpectedly found Int %v", entry)
 	}
-	if iterations != 0 {
-		t.Errorf("Expected 0 iteretions got: %v", iterations)
-	}
-	found, iterations = tree.find(Real(1.0))
-	if found {
-		t.Errorf("Unexpectedly found Real")
-	}
-	if iterations != 0 {
-		t.Errorf("Expected 0 iteretions got: %v", iterations)
+	rentry, rfound := tree.find(Real(1.0))
+	if rfound || rentry != nil {
+		t.Errorf("Unexpectedly found Real %v", rentry)
 	}
 }
 
@@ -67,19 +68,13 @@ func TestMakell_rb_tree_ptr(t *testing.T) {
 	if tree.root != nil {
 		t.Errorf("Root is not nil")
 	}
-	found, iterations := tree.find(Int(1))
-	if found {
-		t.Errorf("Unexpectedly found Int")
+	entry, found := tree.find(Int(1))
+	if found || entry != nil {
+		t.Errorf("Unexpectedly found Int %v", entry)
 	}
-	if iterations != 0 {
-		t.Errorf("Expected 0 iteretions got: %v", iterations)
-	}
-	found, iterations = tree.find(Real(1.0))
-	if found {
-		t.Errorf("Unexpectedly found Real")
-	}
-	if iterations != 0 {
-		t.Errorf("Expected 0 iteretions got: %v", iterations)
+	rentry, rfound := tree.find(Real(1.0))
+	if rfound || rentry != nil {
+		t.Errorf("Unexpectedly found Real %v", rentry)
 	}
 }
 
@@ -87,8 +82,9 @@ func TestMakeinsert(t *testing.T) {
 	var tree ll_rb_tree
 	var failures int
 	for i := 0; i < 10; i++ {
+		var ientry Item
 		iitem := Int(rand.Intn(800))
-		iin, _ := tree.find(iitem)
+		_, iin := tree.find(iitem)
 		tsz := tree.count
 		tree.insert(iitem)
 		if iin {
@@ -100,7 +96,7 @@ func TestMakeinsert(t *testing.T) {
 				t.Errorf("Count unchanged (insert i): Expected %v got: %v", tsz + 1, tree.count)
 			}
 		}
-		if iin, _ = tree.find(iitem); !iin {
+		if ientry, iin = tree.find(iitem); !iin || !Equal(ientry, iitem) {
 			t.Errorf("Inserted %v not found", iitem)
 			failures++
 		}
@@ -117,7 +113,7 @@ func TestMakeinsert_keep_duplicates(t *testing.T) {
 	tree.keep_duplicates = true
 	for i := 0; i < 1000; i++ {
 		iitem := Int(rand.Intn(800))
-		if found, _ := tree.find(iitem); found {
+		if _, found := tree.find(iitem); found {
 			duplicates_found = true
 		}
 		tsz := tree.count
@@ -125,7 +121,7 @@ func TestMakeinsert_keep_duplicates(t *testing.T) {
 		if tsz + 1 != tree.count {
 			t.Errorf("Count unchanged (insert i): Expected %v got: %v", tsz + 1, tree.count)
 		}
-		if iin, _ := tree.find(iitem); !iin {
+		if _, iin := tree.find(iitem); !iin {
 			t.Errorf("Inserted %v not found", iitem)
 			failures++
 		}

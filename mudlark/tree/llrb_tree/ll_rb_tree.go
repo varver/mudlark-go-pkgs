@@ -82,6 +82,8 @@ func insert(node *ll_rb_node, item Item) (*ll_rb_node, bool) {
 		node.left, inserted = insert(node.left, item)
 	} else if node.item.Precedes(item) {
 		node.right, inserted = insert(node.right, item)
+	} else {
+		node.item = item
 	} 
 	return fix_up(node), inserted
 }
@@ -238,17 +240,17 @@ type ll_rb_tree struct {
 	keep_duplicates bool
 }
 
-func (this ll_rb_tree) find(item Item) (found bool, iterations uint) {
+func (this ll_rb_tree) find(item Item) (entry Item, found bool) {
 	if this.count == 0 {
 		return
 	}
 	for node := this.root; node != nil && !found; {
-		iterations++
 		if item.Precedes(node.item) {
 			node = node.left
 		} else if node.item.Precedes(item) {
 			node = node.right
 		} else {
+			entry = node.item
 			found = true
 		}
 	}
@@ -313,7 +315,10 @@ func (this Tree) Len() uint {
 	return this.Data.count
 }
 
-// Insert item in the tree.
+// Insert item in the tree.  If the tree was initialized to filter out
+// duplicates the item being inserted will overwrite any equal item already
+// in the tree.  This allows the tree to be used as a look up table using
+// {key, value} item types where Precedes() ony uses the key.
 func (this *Tree) Insert(item Item) {
 	this.Data.insert(item)
 }
@@ -326,7 +331,13 @@ func (this *Tree) Delete(item Item) {
 
 // Is there an instance equal to item in the tree.
 func (this *Tree) Has(item Item) (found bool) {
-	found, _ = this.Data.find(item)
+	_, found = this.Data.find(item)
+	return
+}
+
+// Is there an instance equal to item in the tree.
+func (this *Tree) Find(item Item) (entry Item, found bool) {
+	entry, found = this.Data.find(item)
 	return
 }
 
