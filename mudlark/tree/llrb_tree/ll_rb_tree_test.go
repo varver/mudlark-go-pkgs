@@ -186,9 +186,11 @@ func max_depth(node *ll_rb_node) uint {
 //		random (best case) input
 //		sequential (worst case) input
 func TestMakedepth_properties(t *testing.T) {
-	var tree_sequential, tree_reverse, tree_random Tree
+	var tree_sequential, tree_reverse, tree_random *Tree = Make(true), Make(true), Make(true)
 	var i int
 	var max_depth_sequential, max_depth_reverse, max_depth_random uint
+	fmt.Printf("                            |                Maximum Depth\n")
+	fmt.Printf("%12v | %12v | %12v | %12v | %12v\n", "Filtered: n", "log2(n)", "Sequential", "Reverse", "Random")
 	for n := uint(1); n < 16; n++ {
 		N := 1 << n
 		for ; i < N; i++ {
@@ -199,8 +201,9 @@ func TestMakedepth_properties(t *testing.T) {
 		max_depth_sequential = max_depth(tree_sequential.root)
 		max_depth_reverse = max_depth(tree_reverse.root)
 		max_depth_random  = max_depth(tree_random.root)
+		fmt.Printf("%12v | %12v | %12v | %12v | %12v\n", N, n, max_depth_sequential, max_depth_reverse, max_depth_random)
 		if max_depth_sequential > 2 * n || max_depth_reverse > 2 * n || max_depth_random > 2 * n {
-			t.Errorf("%v : %v : %v : %v\n", n, i, max_depth_sequential, max_depth_random)
+			t.Errorf("Too deep: %v : %v : %v : %v\n", N, max_depth_sequential, max_depth_reverse, max_depth_random)
 		}
 	}
 }
