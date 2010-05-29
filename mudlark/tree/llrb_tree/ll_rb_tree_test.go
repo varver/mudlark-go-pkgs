@@ -207,3 +207,41 @@ func TestMakedepth_properties(t *testing.T) {
 	}
 }
 
+type key_value struct {
+	key int
+	value int
+}
+
+func (this key_value) Precedes(other interface{}) bool {
+	return this.key < other.(key_value).key
+}
+
+func TestKeyValue(t *testing.T) {
+	look_up_table := Make(true)
+	for i := 0; i < 2000; i++ {
+		look_up_table.Insert(key_value{rand.Int(), rand.Int()})
+	}
+	for kvi := range look_up_table.Iter(IN_ORDER) {
+		kv := kvi.(key_value)
+		val, found := look_up_table.Find(key_value{kv.key, 0})
+		if !found || kv.value != val.(key_value).value {
+			t.Errorf("Bad value: %v : %v != %v\n", kv, kv.value, val.(key_value).value)
+		}
+	}
+}
+
+func TestKeyValueChange(t *testing.T) {
+	look_up_table := Make(true)
+	for i := 0; i < 20; i++ {
+		look_up_table.Insert(key_value{rand.Int(), rand.Int()})
+	}
+	for kvi := range look_up_table.Iter(IN_ORDER) {
+		kv := kvi.(key_value)
+		look_up_table.Insert(key_value{kv.key, kv.value + 2})
+		val, found := look_up_table.Find(key_value{kv.key, 0})
+		if !found || (kv.value + 2) != val.(key_value).value {
+			t.Errorf("Bad value: %v : %v != %v\n", kv, kv.value, val.(key_value).value)
+		}
+	}
+}
+
