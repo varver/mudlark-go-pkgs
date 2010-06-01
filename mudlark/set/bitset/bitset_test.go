@@ -7,7 +7,7 @@ import (
 	"testing"
 	"rand"
 	"reflect"
-	"mudlark/tree/llrb_tree"
+	//"mudlark/tree/llrb_tree"
 )
 
 func TestMakeBitSet(t *testing.T) {
@@ -21,8 +21,10 @@ func TestMakeBitSet(t *testing.T) {
 	if set.bits == nil {
 		t.Errorf("Bit map unitialized")
 	}
-	if set.bits.Len() != 0 {
-		t.Errorf("Expected len(bits) 0: got %v", set.bits.Len())
+	//if set.bits.Len() != 0 {
+	if len(set.bits) != 0 {
+		//t.Errorf("Expected len(bits) 0: got %v", set.bits.Len())
+		t.Errorf("Expected len(bits) 0: got %v", len(set.bits))
 	}
 }
 
@@ -145,8 +147,10 @@ func TestKeyMappingInterface(t *testing.T) {
 
 func checkbitcount(bset *bitset, str string, t *testing.T) {
 	var count uint64 = 0
-	for record := range bset.bits.Iter(llrb_tree.IN_ORDER) {
-		count += uint64(bitcount(record.(*bitrecord).chunk))
+	//for record := range bset.bits.Iter(llrb_tree.IN_ORDER) {
+	//	count += uint64(bitcount(record.(*bitrecord).chunk))
+	for _, chunk := range bset.bits {
+		count += uint64(bitcount(chunk))
 	}
 	if count != bset.bitcount {
 		t.Errorf("Bit count %s. Expected: %v got: %v", str, bset.bitcount, count)
