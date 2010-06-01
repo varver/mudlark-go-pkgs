@@ -224,3 +224,125 @@ func BenchmarkInsertSerial(b *testing.B) {
 	}
 }
 
+func TestIterate(t *testing.T) {
+	set := Make()
+	var count int
+	for i := 0; i < 10000; i++ {
+		set.Add(rand.Int())
+		count++
+	}
+	for _ = range set.Iter() {
+		count--
+	}
+	if count != 0 {
+		t.Errorf("%v count", count)
+	}
+}
+
+func make_set_serial(begin, end int64) (set *Set) {
+	set = Make()
+	for i := begin; i <= end; i++ {
+		set.Add(i)
+	}
+	return
+}
+
+func TestDisjointIntersect(t *testing.T) {
+	setA := make_set_serial(-100, 0)
+	setB := make_set_serial(1, 100)
+	setC := make_set_serial(-50, 50)
+	if Intersect(setA, setB) {
+		t.Errorf("setA and setB should be disjoint")
+	}
+	if !Intersect(setA, setC) {
+		t.Errorf("setA and setC should intersect")
+	}
+	if Intersect(setA, setB) && Disjoint(setA, setB) {
+		t.Errorf("Intersect(A, B) and Disjoint(A, B) should be mutually exclusive")
+	}
+	if Intersect(setA, setC) && Disjoint(setA, setC) {
+		t.Errorf("Intersect(A, B) and Disjoint(A, B) should be mutually exclusive")
+	}
+	if Intersect(setA, setB) != Intersect(setB, setA) {
+		t.Errorf("Intersect(A, B) and Intersect(B, A) should be equal")
+	}
+	if Intersect(setA, setC) != Intersect(setC, setA) {
+		t.Errorf("Intersect(A, C) and Intersect(C, A) should be equal")
+	}
+	if Disjoint(setA, setB) != Disjoint(setB, setA) {
+		t.Errorf("Disjoint(A, B) and Disjoint(B, A) should be equal")
+	}
+	if Disjoint(setA, setC) != Disjoint(setC, setA) {
+		t.Errorf("Disjoint(A, C) and Disjoint(C, A) should be equal")
+	}
+}
+
+func TestUnion(t *testing.T) {
+	setA := make_set_serial(-100, 0)
+	setB := make_set_serial(1, 100)
+	setC := make_set_serial(-50, 50)
+	setAuB := Union(setA, setB)
+	setAuC := Union(setA, setC)
+	if !Intersect(setA, setAuB) || !Intersect(setB, setAuB) {
+		t.Errorf("setAuB should intersect with both setA and SetB")
+	}
+	if setAuB.Cardinality() != setA.Cardinality() + setB.Cardinality() {
+		t.Errorf("Cardinality of a union of disjoint sets should be the sum of their cardinalities")
+	}
+	for item := range setAuB.Iter() {
+		if !setA.Has(item) && !setB.Has(item) {
+			t.Errorf("Items in setAuB should be in either setA or setB")
+		}
+	}
+	if !Intersect(setA, setAuC) || !Intersect(setC, setAuC) {
+		t.Errorf("setAuC should intersect with both setA and SetC")
+	}
+	var incommon uint64
+	for item := range setAuC.Iter() {
+		if setA.Has(item) {
+			if setC.Has(item) {
+				incommon++
+			}
+		} else if !setC.Has(item) {
+			t.Errorf("Items in setAuC should be in either setA or setC")
+		}
+	}
+	if setAuC.Cardinality() != setA.Cardinality() + setC.Cardinality() - incommon {
+		t.Errorf("Cardinality of a union of intesecting sets should be the sum of their cardinalities minus the size of their intersection")
+	}
+}
+
+func TestIntersection(t *testing.T) {
+	setA := make_set_serial(-100, 0)
+	setB := make_set_serial(1, 100)
+	setC := make_set_serial(-50, 50)
+	setAiB := Intersection(setA, setB)
+	setAiC := Intersection(setA, setC)
+	if (Intersect(setA, setAiB) && !Intersect(setB, setAiB)) || (!Intersect(setA, setAiB) && Intersect(setB, setAiB)) {
+		t.Errorf("setAiB should intersect with both setA and SetB or neither")
+	}
+	if setAiB.Cardinality() != 0 {
+		t.Errorf("Cardinality of an intersection of disjoint sets should be 0")
+	}
+	for item := range setAiB.Iter() {
+		if !setA.Has(item) || !setB.Has(item) {
+			t.Errorf("Items in setAiB should be in both setA and setB")
+		}
+	}
+	if !Intersect(setA, setAiC) || !Intersect(setC, setAiC) {
+		t.Errorf("setAiC should intersect with both setA and SetC")
+	}
+	for item := range setAiC.Iter() {
+		if setA.Has(item) {
+			if !setC.Has(item) {
+				t.Errorf("Items in setAiC should be in both setA and setC")
+			}
+		} else if setC.Has(item) {
+			t.Errorf("Items in setAiC should be in both setA and setC")
+		}
+	}
+	if setAiC.Cardinality() != 51 {
+		t.Errorf("Cardinality of an intersection of intesecting sets should be the size of their intersection")
+	}
+}
+

@@ -114,6 +114,11 @@ func Make() (this *Set) {
 	return
 }
 
+// Cardinality returns the number of items in the set.
+func (this *Set) Cardinality() uint64 {
+	return this.bitcount
+}
+
 func (this *Set) Clear() {
 	this.bitcount = 0
 	this.bits = make(map[bitchunkkey]bitchunk) // let GC clean up after us
@@ -234,6 +239,25 @@ func Disjoint(a, b *Set) bool {
 		}
 	}
 	return true
+}
+
+// Do the sets a and b intersect
+func Intersect(a, b *Set) bool {
+	var smallest, other *Set
+
+	if len(a.bits) < len(b.bits) {
+		smallest = a
+		other = b
+	} else {
+		smallest = b
+		other = a
+	}
+	for key, schunk := range smallest.bits {
+		if schunk & other.bits[key] != 0 {
+			return true
+		}
+	}
+	return false
 }
 
 func Intersection(a, b *Set) (bset *Set) {
