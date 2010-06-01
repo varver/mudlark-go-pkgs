@@ -146,7 +146,7 @@ func TestKeyMappingInterface(t *testing.T) {
 func checkbitcount(bset *bitset, str string, t *testing.T) {
 	var count uint64 = 0
 	for record := range bset.bits.Iter(llrb_tree.IN_ORDER) {
-		count += uint64(bitcount(record.(bitrecord).chunk))
+		count += uint64(bitcount(record.(*bitrecord).chunk))
 	}
 	if count != bset.bitcount {
 		t.Errorf("Bit count %s. Expected: %v got: %v", str, bset.bitcount, count)
@@ -191,6 +191,32 @@ func BenchmarkMakeEmptyBitSet(b *testing.B) {
 			// This is just here to stop the compiler complaining
 		}
 		b.StartTimer()
+	}
+}
+
+func BenchmarkInsertRandom(b *testing.B) {
+	const N = 50000
+	b.SetBytes(N)
+	for ib := 0; ib < b.N; ib++ {
+		b.StopTimer()
+		set := makebitset()
+		b.StartTimer()
+		for i := 0; i < N; i++ {
+			set.setBit(ibitlocation(rand.Int()))
+		}
+	}
+}
+
+func BenchmarkInsertSerial(b *testing.B) {
+	const N = 50000
+	b.SetBytes(N)
+	for ib := 0; ib < b.N; ib++ {
+		b.StopTimer()
+		set := makebitset()
+		b.StartTimer()
+		for i := 0; i < N; i++ {
+			set.setBit(ibitlocation(i))
+		}
 	}
 }
 

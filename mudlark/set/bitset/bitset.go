@@ -17,8 +17,8 @@ type bitrecord struct {
 	chunk bitchunk
 }
 
-func (this bitrecord) Precedes(other interface{}) bool {
-	return this.key < other.(bitrecord).key
+func (this *bitrecord) Precedes(other interface{}) bool {
+	return this.key < other.(*bitrecord).key
 }
 
 const bitchunkSZ = (1 + ^bitchunk(0)>>32&1) * 32
@@ -93,31 +93,31 @@ func imemberval(key bitchunkkey, bitn uint8) interface{} {
 
 // Set the specified bit to true
 func (bset *bitset) setBit(key bitchunkkey, mask bitchunk) {
-	record, found := bset.bits.Find(bitrecord{key, 0})
+	record, found := bset.bits.Find(&bitrecord{key, 0})
 	if found {
-		chunk := record.(bitrecord).chunk
+		chunk := record.(*bitrecord).chunk
 		mask |= chunk
 		if mask != chunk {
-			bset.bits.Insert(bitrecord{key, mask})
+			record.(*bitrecord).chunk = mask
 			bset.bitcount++
 		}
 	} else {
-		bset.bits.Insert(bitrecord{key, mask})
+		bset.bits.Insert(&bitrecord{key, mask})
 		bset.bitcount++
 	}
 }
 
 // Clear the specified bit (i.e. set to false)
 func (bset *bitset) clearBit(key bitchunkkey, mask bitchunk) {
-	record, found := bset.bits.Find(bitrecord{key, 0})
+	record, found := bset.bits.Find(&bitrecord{key, 0})
 	if found {
-		chunk := record.(bitrecord).chunk
+		chunk := record.(*bitrecord).chunk
 		newchunk := chunk & (^mask)
 		if newchunk != chunk {
 			if newchunk == 0 {
-				bset.bits.Delete(bitrecord{key, 0})
+				bset.bits.Delete(&bitrecord{key, 0})
 			} else {
-				bset.bits.Insert(bitrecord{key, newchunk})
+				bset.bits.Insert(&bitrecord{key, newchunk})
 			}
 			bset.bitcount--
 		}
@@ -126,9 +126,9 @@ func (bset *bitset) clearBit(key bitchunkkey, mask bitchunk) {
 
 // Get the value for the specified bit
 func (bset *bitset) getBit(key bitchunkkey, mask bitchunk) bool {
-	record, found := bset.bits.Find(bitrecord{key, 0})
+	record, found := bset.bits.Find(&bitrecord{key, 0})
 	if found {
-		return (record.(bitrecord).chunk & mask) != 0
+		return (record.(*bitrecord).chunk & mask) != 0
 	}
 	return false
 }
@@ -168,7 +168,7 @@ func getbits(chunk bitchunk) (bits []uint8) {
 
 func (bset *bitset) iterate(c chan<- interface{}) {
 	for irecord := range bset.bits.Iter(llrb_tree.IN_ORDER) {
-		record := irecord.(bitrecord)
+		record := irecord.(*bitrecord)
 		for _, bit := range getbits(record.chunk) {
 			c <- imemberval(record.key, bit)
 		}
@@ -203,9 +203,9 @@ func equal(a, b *bitset) bool {
 		return false
 	} else {
 		for iarecord := range a.bits.Iter(llrb_tree.IN_ORDER) {
-			arecord := iarecord.(bitrecord)
+			arecord := iarecord.(*bitrecord)
 			ibrecord, found := b.bits.Find(arecord)
-			if !found || arecord.chunk != ibrecord.(bitrecord).chunk {
+			if !found || arecord.chunk != ibrecord.(*bitrecord).chunk {
 				return false
 			}
 		}
@@ -219,9 +219,9 @@ func subset(a, b *bitset) bool {
 		return false
 	} else {
 		for iarecord := range a.bits.Iter(llrb_tree.IN_ORDER) {
-			arecord := iarecord.(bitrecord)
+			arecord := iarecord.(*bitrecord)
 			ibrecord, found := b.bits.Find(arecord)
-			if !found || (arecord.chunk & ibrecord.(bitrecord).chunk) != arecord.chunk {
+			if !found || (arecord.chunk & ibrecord.(*bitrecord).chunk) != arecord.chunk {
 				return false
 			}
 		}
@@ -259,9 +259,9 @@ func disjoint(a, b *bitset) bool {
 		other = a
 	}
 	for ismrecord := range smallest.bits.Iter(llrb_tree.IN_ORDER) {
-		smrecord := ismrecord.(bitrecord)
+		smrecord := ismrecord.(*bitrecord)
 		iotrecord, found := other.bits.Find(smrecord)
-		if found && (smrecord.chunk & iotrecord.(bitrecord).chunk) != 0 {
+		if found && (smrecord.chunk & iotrecord.(*bitrecord).chunk) != 0 {
 			return false
 		}
 	}
@@ -280,12 +280,12 @@ func intersection(a, b *bitset) (bset *bitset) {
 	}
 	bset = makebitset()
 	for ismrecord := range smallest.bits.Iter(llrb_tree.IN_ORDER) {
-		smrecord := ismrecord.(bitrecord)
+		smrecord := ismrecord.(*bitrecord)
 		iotrecord, found := other.bits.Find(smrecord)
 		if found {
-			chunk := smrecord.chunk & iotrecord.(bitrecord).chunk
+			chunk := smrecord.chunk & iotrecord.(*bitrecord).chunk
 			if chunk != 0 {
-				bset.bits.Insert(bitrecord{smrecord.key, chunk})
+				bset.bits.Insert(&bitrecord{smrecord.key, chunk})
 				bset.bitcount += uint64(bitcount(chunk))
 			}
 		}
@@ -303,12 +303,12 @@ func bitsetcopy(a *bitset) (bset *bitset) {
 func union(a, b *bitset) (bset *bitset) {
 	bset = bitsetcopy(a)
 	for ibrecord := range b.bits.Iter(llrb_tree.IN_ORDER) {
-		brecord := ibrecord.(bitrecord)
+		brecord := ibrecord.(*bitrecord)
 		irecord, found := bset.bits.Find(brecord)
 		if found {
-			record := irecord.(bitrecord)
+			record := irecord.(*bitrecord)
 			newchunk := brecord.chunk | record.chunk
-			bset.bits.Insert(bitrecord{brecord.key, newchunk})
+			bset.bits.Insert(&bitrecord{brecord.key, newchunk})
 			bset.bitcount += uint64(bitcount(newchunk) - bitcount(record.chunk))
 		} else {
 			bset.bits.Insert(brecord)
@@ -321,13 +321,13 @@ func union(a, b *bitset) (bset *bitset) {
 func difference(a, b *bitset) (bset *bitset) {
 	bset = makebitset()
 	for iarecord := range a.bits.Iter(llrb_tree.IN_ORDER) {
-		arecord := iarecord.(bitrecord)
+		arecord := iarecord.(*bitrecord)
 		ibrecord, found := b.bits.Find(arecord)
 		if found {
-			brecord := ibrecord.(bitrecord)
+			brecord := ibrecord.(*bitrecord)
 			chunk := arecord.chunk & (^brecord.chunk)
 			if chunk != 0 {
-				bset.bits.Insert(bitrecord{arecord.key, chunk})
+				bset.bits.Insert(&bitrecord{arecord.key, chunk})
 				bset.bitcount += uint64(bitcount(chunk))
 			}
 		} else {
