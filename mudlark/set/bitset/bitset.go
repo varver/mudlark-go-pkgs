@@ -2,8 +2,8 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-// The set package implements sets
-package set
+// The bitset package implements sets of integer numbers
+package bitset
 
 import (
 	"fmt"
@@ -15,12 +15,11 @@ type bitchunkkey int64
 
 const bitchunkSZ = (1 + ^bitchunk(0)>>32&1) * 32
 
-// Bitset is a sparse representation of a bitset for use as a basis for
-// integer sets
-type bitset struct {
+// Set is a representation of integer number sets
+type Set struct {
 	// The number of bits in the set with a value of true
 	bitcount uint64
-	// A record of the bits in the bitset with a value of true
+	// A record of the bits in the Set with a value of true
 	// Bit i's value is stored in bit i % 32 of bits[i / 32]
 	bits map[bitchunkkey]bitchunk
 }
@@ -84,37 +83,40 @@ func imemberval(key bitchunkkey, bitn uint8) interface{} {
 }
 
 // Set the specified bit to true
-func (bset *bitset) setBit(key bitchunkkey, mask bitchunk) {
-	bits := bset.bits[key] | mask
-	if bits != bset.bits[key] {
-		bset.bitcount++
+func (this *Set) Add(member interface{}) {
+	key, mask := ibitlocation(member)
+	bits := this.bits[key] | mask
+	if bits != this.bits[key] {
+		this.bitcount++
 	}
-	bset.bits[key] = bits
+	this.bits[key] = bits
 }
 
 // Clear the specified bit (i.e. set to false)
-func (bset *bitset) clearBit(key bitchunkkey, mask bitchunk) {
-	bits := bset.bits[key] & (^mask)
-	if bits != bset.bits[key] {
-		bset.bitcount--
+func (this *Set) Remove(member interface{}) {
+	key, mask := ibitlocation(member)
+	bits := this.bits[key] & (^mask)
+	if bits != this.bits[key] {
+		this.bitcount--
 	}
-	bset.bits[key] = bits, bits != 0
+	this.bits[key] = bits, bits != 0
 }
 
 // Get the value for the specified bit
-func (bset *bitset) getBit(key bitchunkkey, mask bitchunk) bool {
-	return (bset.bits[key] & mask) != 0
+func (this *Set) Has(member interface{}) bool {
+	key, mask := ibitlocation(member)
+	return (this.bits[key] & mask) != 0
 }
 
-func makebitset() (bset *bitset) {
-	bset = new(bitset)
-	bset.bits = make(map[bitchunkkey]bitchunk)
+func Make() (this *Set) {
+	this = new(Set)
+	this.bits = make(map[bitchunkkey]bitchunk)
 	return
 }
 
-func (bset *bitset) clear() {
-	bset.bitcount = 0
-	bset.bits = make(map[bitchunkkey]bitchunk) // let GC clean up after us
+func (this *Set) Clear() {
+	this.bitcount = 0
+	this.bits = make(map[bitchunkkey]bitchunk) // let GC clean up after us
 	return
 }
 
@@ -139,8 +141,8 @@ func getbits(chunk bitchunk) (bits []uint8) {
 	return bits
 }
 
-func (bset *bitset) iterate(c chan<- interface{}) {
-	for key, chunk := range bset.bits {
+func (this *Set) iterate(c chan<- interface{}) {
+	for key, chunk := range this.bits {
 		for _, bit := range getbits(chunk) {
 			c <- imemberval(key, bit)
 		}
@@ -148,16 +150,16 @@ func (bset *bitset) iterate(c chan<- interface{}) {
 	close(c)
 }
 
-func (bset *bitset) iter() <-chan interface{} {
+func (this *Set) Iter() <-chan interface{} {
 	c := make(chan interface{})
-	go bset.iterate(c)
+	go this.iterate(c)
 	return c
 }
 
-func (bset bitset) tostring() string {
+func (this *Set) String() string {
 	str := "{"
 	addcomma := false
-	for member := range bset.iter() {
+	for member := range this.Iter() {
 		if addcomma {
 			str += fmt.Sprintf(", %v", member)
 		} else {
@@ -170,7 +172,7 @@ func (bset bitset) tostring() string {
 }
 
 // Are sets a and b equal
-func equal(a, b *bitset) bool {
+func Equal(a, b *Set) bool {
 	if a.bitcount != b.bitcount || len(a.bits) != len(b.bits) {
 		return false
 	} else {
@@ -184,7 +186,7 @@ func equal(a, b *bitset) bool {
 }
 
 // Is set a a subset of set b
-func subset(a, b *bitset) bool {
+func Subset(a, b *Set) bool {
 	if a.bitcount > b.bitcount || len(a.bits) > len(b.bits) {
 		return false
 	} else {
@@ -197,27 +199,27 @@ func subset(a, b *bitset) bool {
 	return true
 }
 
-// Is set a a proper subset of set b
-func propersubset(a, b *bitset) bool {
+// Is set a a proper Subset of set b
+func ProperSubset(a, b *Set) bool {
 	if a.bitcount >= b.bitcount {
 		return false
 	}
-	return subset(a, b)
+	return Subset(a, b)
 }
 
 // Is set a a superset of set b
-func superset(a, b *bitset) bool {
-	return subset(b, a)
+func Superset(a, b *Set) bool {
+	return Subset(b, a)
 }
 
 // Is set a a proper superset of set b
-func propersuperset(a, b *bitset) bool {
-	return propersubset(b, a)
+func ProperSuperset(a, b *Set) bool {
+	return ProperSubset(b, a)
 }
 
 // Are a and b disjoint sets
-func disjoint(a, b *bitset) bool {
-	var smallest, other *bitset
+func Disjoint(a, b *Set) bool {
+	var smallest, other *Set
 
 	if len(a.bits) < len(b.bits) {
 		smallest = a
@@ -234,8 +236,8 @@ func disjoint(a, b *bitset) bool {
 	return true
 }
 
-func intersection(a, b *bitset) (bset *bitset) {
-	var smallest, other *bitset
+func Intersection(a, b *Set) (bset *Set) {
+	var smallest, other *Set
 
 	if len(a.bits) < len(b.bits) {
 		smallest = a
@@ -244,7 +246,7 @@ func intersection(a, b *bitset) (bset *bitset) {
 		smallest = b
 		other = a
 	}
-	bset = makebitset()
+	bset = Make()
 	for key, schunk := range smallest.bits {
 		chunk := schunk & other.bits[key]
 		if chunk != 0 {
@@ -255,17 +257,17 @@ func intersection(a, b *bitset) (bset *bitset) {
 	return
 }
 
-func bitsetcopy(a *bitset) (bset *bitset) {
-	bset = makebitset()
-	for akey, achunk := range a.bits {
+func (this *Set) Copy() (bset *Set) {
+	bset = Make()
+	for akey, achunk := range this.bits {
 		bset.bits[akey] = achunk
 	}
-	bset.bitcount = a.bitcount
+	bset.bitcount = this.bitcount
 	return
 }
 
-func union(a, b *bitset) (bset *bitset) {
-	bset = bitsetcopy(a)
+func Union(a, b *Set) (bset *Set) {
+	bset = a.Copy()
 	for bkey, bchunk := range b.bits {
 		bset.bits[bkey] |= bchunk
 	}
@@ -276,8 +278,8 @@ func union(a, b *bitset) (bset *bitset) {
 	return
 }
 
-func difference(a, b *bitset) (bset *bitset) {
-	bset = makebitset()
+func Difference(a, b *Set) (bset *Set) {
+	bset = Make()
 	for akey, achunk := range a.bits {
 		var chunk bitchunk = achunk & (^b.bits[akey])
 		if chunk != 0 {
@@ -288,8 +290,8 @@ func difference(a, b *bitset) (bset *bitset) {
 	return
 }
 
-func symmetricdifference(a, b *bitset) (bset *bitset) {
-	bset = union(difference(a, b), difference(b, a))
+func SymmetricDifference(a, b *Set) (bset *Set) {
+	bset = Union(Difference(a, b), Difference(b, a))
 	return
 }
 

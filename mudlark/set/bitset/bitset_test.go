@@ -1,7 +1,7 @@
 // Copyright 2010 -- Peter Williams, all rights reserved
 // Use of this source code is governed by the new BSD license.
 
-package set
+package bitset
 
 import (
 	"testing"
@@ -10,10 +10,10 @@ import (
 	//"mudlark/tree/llrb_tree"
 )
 
-func TestMakeBitSet(t *testing.T) {
-	set := makebitset()
-	if reflect.Typeof(set).String() != "*set.bitset" {
-		t.Errorf("Expected type \"*bitset\": got %v", reflect.Typeof(set).String())
+func TestMakeSet(t *testing.T) {
+	set := Make()
+	if reflect.Typeof(set).String() != "*bitset.Set" {
+		t.Errorf("Expected type \"*bitset.Set\": got %v", reflect.Typeof(set).String())
 	}
 	if set.bitcount != 0 {
 		t.Errorf("Expected bitcount 0: got %v", set.bitcount)
@@ -145,7 +145,7 @@ func TestKeyMappingInterface(t *testing.T) {
 	}
 }
 
-func checkbitcount(bset *bitset, str string, t *testing.T) {
+func checkbitcount(bset *Set, str string, t *testing.T) {
 	var count uint64 = 0
 	//for record := range bset.bits.Iter(llrb_tree.IN_ORDER) {
 	//	count += uint64(bitcount(record.(*bitrecord).chunk))
@@ -159,37 +159,37 @@ func checkbitcount(bset *bitset, str string, t *testing.T) {
 
 func TestKeyBitcountAddAndRemove(t *testing.T) {
 	const loopsz = 1000
-	bset := makebitset()
+	bset := Make()
 	for i := 0; i < loopsz; i++ {
-		bset.setBit(ibitlocation(i))
+		bset.Add(i)
 		checkbitcount(bset, "add(sequence)", t)
 	}
 	for i := 0; i < loopsz; i++ {
-		bset.setBit(ibitlocation(rand.Int63()))
+		bset.Add(rand.Int63())
 		checkbitcount(bset, "add(random(spread))", t)
 	}
 	for i := 0; i < loopsz; i++ {
-		bset.setBit(ibitlocation(rand.Int63n(loopsz * 2)))
+		bset.Add(rand.Int63n(loopsz * 2))
 		checkbitcount(bset, "add(random(focussed))", t)
 	}
 	for i := 0; i < loopsz; i++ {
-		bset.clearBit(ibitlocation(rand.Int63()))
+		bset.Remove(rand.Int63())
 		checkbitcount(bset, "remove(random(spread))", t)
 	}
 	for i := 0; i < loopsz; i++ {
-		bset.clearBit(ibitlocation(rand.Int63n(loopsz * 2)))
+		bset.Remove(rand.Int63n(loopsz * 2))
 		checkbitcount(bset, "remove(random(focussed))", t)
 	}
 	for i := 0; i < loopsz; i++ {
-		bset.clearBit(ibitlocation(i))
+		bset.Remove(i)
 		checkbitcount(bset, "remove(sequence)", t)
 	}
 }
 
-func BenchmarkMakeEmptyBitSet(b *testing.B) {
+func BenchmarkMakeEmptySet(b *testing.B) {
 	b.SetBytes(1)
 	for i := 0; i < b.N; i++ {
-		set := makebitset()
+		set := Make()
 		b.StopTimer()
 		if set.bitcount > 0 {
 			// This is just here to stop the compiler complaining
@@ -203,10 +203,10 @@ func BenchmarkInsertRandom(b *testing.B) {
 	b.SetBytes(N)
 	for ib := 0; ib < b.N; ib++ {
 		b.StopTimer()
-		set := makebitset()
+		set := Make()
 		b.StartTimer()
 		for i := 0; i < N; i++ {
-			set.setBit(ibitlocation(rand.Int()))
+			set.Add(rand.Int())
 		}
 	}
 }
@@ -216,10 +216,10 @@ func BenchmarkInsertSerial(b *testing.B) {
 	b.SetBytes(N)
 	for ib := 0; ib < b.N; ib++ {
 		b.StopTimer()
-		set := makebitset()
+		set := Make()
 		b.StartTimer()
 		for i := 0; i < N; i++ {
-			set.setBit(ibitlocation(i))
+			set.Add(i)
 		}
 	}
 }
