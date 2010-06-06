@@ -45,7 +45,7 @@ func sbitlocation(bit int64) (key bitchunkkey, mask bitchunk) {
 }
 
 // Location of bit representing arbitrary integer value
-func ibitlocation(member interface{}) (key bitchunkkey, chunk bitchunk) {
+func ibitlocation(member Item) (key bitchunkkey, chunk bitchunk) {
 	switch t := member.(type) {
 	case uint:
 		key, chunk = ubitlocation(uint64(member.(uint)))
@@ -75,7 +75,7 @@ func ibitlocation(member interface{}) (key bitchunkkey, chunk bitchunk) {
 }
 
 // Get the value of the member at a specific location
-func imemberval(key bitchunkkey, bitn uint8) interface{} {
+func imemberval(key bitchunkkey, bitn uint8) Item {
 	if key < 0 {
 		return int64(key+1)*int64(bitchunkSZ) - int64(bitn)
 	}
@@ -83,7 +83,7 @@ func imemberval(key bitchunkkey, bitn uint8) interface{} {
 }
 
 // Set the specified bit to true
-func (this *Set) Add(member interface{}) {
+func (this *Set) Add(member Item) {
 	key, mask := ibitlocation(member)
 	bits := this.bits[key] | mask
 	if bits != this.bits[key] {
@@ -93,7 +93,7 @@ func (this *Set) Add(member interface{}) {
 }
 
 // Clear the specified bit (i.e. set to false)
-func (this *Set) Remove(member interface{}) {
+func (this *Set) Remove(member Item) {
 	key, mask := ibitlocation(member)
 	bits := this.bits[key] & (^mask)
 	if bits != this.bits[key] {
@@ -103,10 +103,15 @@ func (this *Set) Remove(member interface{}) {
 }
 
 // Get the value for the specified bit
-func (this *Set) Has(member interface{}) bool {
+func (this *Set) Has(member Item) bool {
 	key, mask := ibitlocation(member)
 	return (this.bits[key] & mask) != 0
 }
+
+// Items are potential members of Sets and are run time checked to be one of
+// the built in integer types (int, uint, ...).
+// Unfortunately, it is not psoosible to check this at compile time.
+type Item interface{}
 
 func Make() (this *Set) {
 	this = new(Set)
@@ -146,7 +151,7 @@ func getbits(chunk bitchunk) (bits []uint8) {
 	return bits
 }
 
-func (this *Set) iterate(c chan<- interface{}) {
+func (this *Set) iterate(c chan<- Item) {
 	for key, chunk := range this.bits {
 		for _, bit := range getbits(chunk) {
 			c <- imemberval(key, bit)
@@ -155,8 +160,8 @@ func (this *Set) iterate(c chan<- interface{}) {
 	close(c)
 }
 
-func (this *Set) Iter() <-chan interface{} {
-	c := make(chan interface{})
+func (this *Set) Iter() <-chan Item {
+	c := make(chan Item)
 	go this.iterate(c)
 	return c
 }
