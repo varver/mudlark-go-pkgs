@@ -113,9 +113,12 @@ func (this *Set) Has(member Item) bool {
 // Unfortunately, it is not psoosible to check this at compile time.
 type Item interface{}
 
-func Make() (this *Set) {
-	this = new(Set)
-	this.bits = make(map[bitchunkkey]bitchunk)
+func Make(items ...Item) (setp *Set) {
+	setp = new(Set)
+	setp.bits = make(map[bitchunkkey]bitchunk)
+	for _, item := range items {
+		setp.Add(item)
+	}
 	return
 }
 

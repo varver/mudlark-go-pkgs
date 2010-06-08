@@ -28,6 +28,19 @@ func TestMakeSet(t *testing.T) {
 	}
 }
 
+func TestMakeSetWithMembers(t *testing.T) {
+	set := Make(-1, 28, 18, 28, 9)
+	if reflect.Typeof(set).String() != "*bitset.Set" {
+		t.Errorf("Expected type \"*bitset.Set\": got %v", reflect.Typeof(set).String())
+	}
+	if set.bitcount != 4 {
+		t.Errorf("Expected bitcount 4: got %v", set.bitcount)
+	}
+	if set.bits == nil {
+		t.Errorf("Bit map unitialized")
+	}
+}
+
 func TestKeyMappingInt64(t *testing.T) {
 	for i := 0; i < 10000; i++ {
 		num := rand.Int63()
