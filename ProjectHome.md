@@ -1,0 +1,1 @@
+A collection of packages providing (hopefully) useful code for use in software using Google's Go programming language.
